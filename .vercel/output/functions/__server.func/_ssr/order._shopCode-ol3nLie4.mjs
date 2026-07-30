@@ -14,7 +14,7 @@ import { A as ShieldCheck, B as Quote, Bt as ChevronRight, Ct as Globe, D as Sma
 import { t as optimizedImageUrl } from "./images-BnAPhdvv.mjs";
 import { n as formatCurrency } from "./pos-BKnCkGZE.mjs";
 import { a as normalizeOrderId, i as normalizeMobile, t as findOrderByPublicId } from "./order-utils-BPm42f6Q.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/order._shopCode-Cpiq-ze5.js
+//#region node_modules/.nitro/vite/services/ssr/assets/order._shopCode-ol3nLie4.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DESKTOP_LAYOUTS = [
@@ -953,8 +953,9 @@ function CustomerPortal() {
 									announcements.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 										className: "flex gap-1.5 mt-4",
 										children: announcements.map((_, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
 											onClick: () => setAnnouncementIdx(idx),
-											className: `h-1.5 rounded-full transition-all duration-300 ${idx === announcementIdx ? "w-8 bg-white" : "w-1.5 bg-white/40"}`
+											className: `h-3 w-3 rounded-full transition-all duration-300 ${idx === announcementIdx ? "w-8 bg-white" : "w-3 bg-white/40"}`
 										}, idx))
 									})
 								]
@@ -1157,14 +1158,16 @@ function CustomerPortal() {
 									}), reviews.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										className: "flex gap-1",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
 											onClick: () => setReviewIdx((i) => Math.max(0, i - 1)),
 											disabled: reviewIdx === 0,
-											className: "w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-all",
+											className: "flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-slate-100 transition-all hover:bg-slate-200 disabled:opacity-40",
 											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronLeft, { className: "w-4 h-4 text-slate-600" })
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
 											onClick: () => setReviewIdx((i) => Math.min(reviews.length - 1, i + 1)),
 											disabled: reviewIdx >= reviews.length - 1,
-											className: "w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-all",
+											className: "flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-slate-100 transition-all hover:bg-slate-200 disabled:opacity-40",
 											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "w-4 h-4 text-slate-600" })
 										})]
 									})]
@@ -1216,8 +1219,9 @@ function CustomerPortal() {
 								reviews.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 									className: "flex justify-center gap-1.5 mt-4",
 									children: reviews.map((_, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
 										onClick: () => setReviewIdx(idx),
-										className: `h-2 rounded-full transition-all duration-300 ${idx === reviewIdx ? "w-6 bg-orange-500" : "w-2 bg-slate-200"}`
+										className: `h-3 rounded-full transition-all duration-300 ${idx === reviewIdx ? "w-6 bg-orange-500" : "w-3 bg-slate-200"}`
 									}, idx))
 								})
 							]
@@ -1236,8 +1240,9 @@ function CustomerPortal() {
 								children: faqs.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+										type: "button",
 										onClick: () => setOpenFaq(openFaq === item.id ? null : item.id),
-										className: "w-full flex items-center justify-between p-4 text-left bg-white hover:bg-slate-50 transition-colors",
+										className: "flex min-h-12 w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 											className: "font-medium text-sm text-slate-800 pr-4",
 											children: item.question

@@ -6,10 +6,10 @@ import { t as i18n_default } from "./i18n-BnUAatYi.mjs";
 import { t as Route$26 } from "./auth-DlKPnlM9.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-CAspbZh6.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-C-f66OMk.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var styles_default = "/assets/styles-CJg87QVh.css";
+var styles_default = "/assets/styles-N8NVQgZg.css";
 function reportLovableError(error, context = {}) {
 	if (typeof window === "undefined") return;
 	window.__lovableEvents?.captureException?.(error, {
@@ -96,7 +96,7 @@ var Route$25 = createRootRouteWithContext()({
 			{ charSet: "utf-8" },
 			{
 				name: "viewport",
-				content: "width=device-width, initial-scale=1"
+				content: "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
 			},
 			{ title: "FoodCourtNotify" },
 			{
@@ -184,7 +184,7 @@ var Route$22 = createFileRoute("/")({
 	] }),
 	component: lazyRouteComponent($$splitComponentImporter$22, "component")
 });
-var $$splitComponentImporter$21 = () => import("./order._shopCode-Cpiq-ze5.mjs");
+var $$splitComponentImporter$21 = () => import("./order._shopCode-ol3nLie4.mjs");
 var Route$21 = createFileRoute("/order/$shopCode")({
 	ssr: false,
 	component: lazyRouteComponent($$splitComponentImporter$21, "component")
@@ -252,7 +252,7 @@ var Route$4 = createFileRoute("/_authenticated/campaigns")({
 });
 var $$splitComponentImporter$3 = () => import("./business-BSlgjfQ0.mjs");
 var Route$3 = createFileRoute("/_authenticated/business")({ component: lazyRouteComponent($$splitComponentImporter$3, "component") });
-var $$splitComponentImporter$2 = () => import("./billing-BIXlOGSv.mjs");
+var $$splitComponentImporter$2 = () => import("./billing-CXf_NsuZ.mjs");
 var Route$2 = createFileRoute("/_authenticated/billing")({ component: lazyRouteComponent($$splitComponentImporter$2, "component") });
 var $$splitComponentImporter$1 = () => import("./analytics-CTNO8I5T.mjs");
 var Route$1 = createFileRoute("/_authenticated/analytics")({

@@ -1042,8 +1042,9 @@ function CustomerPortal() {
                     {announcements.map((_, idx) => (
                       <button
                         key={idx}
+                        type="button"
                         onClick={() => setAnnouncementIdx(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${idx === announcementIdx ? "w-8 bg-white" : "w-1.5 bg-white/40"}`}
+                        className={`h-3 w-3 rounded-full transition-all duration-300 ${idx === announcementIdx ? "w-8 bg-white" : "w-3 bg-white/40"}`}
                       />
                     ))}
                   </div>
@@ -1232,16 +1233,18 @@ function CustomerPortal() {
                 {reviews.length > 1 && (
                   <div className="flex gap-1">
                     <button
+                      type="button"
                       onClick={() => setReviewIdx((i) => Math.max(0, i - 1))}
                       disabled={reviewIdx === 0}
-                      className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-all"
+                      className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-slate-100 transition-all hover:bg-slate-200 disabled:opacity-40"
                     >
                       <ChevronLeft className="w-4 h-4 text-slate-600" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setReviewIdx((i) => Math.min(reviews.length - 1, i + 1))}
                       disabled={reviewIdx >= reviews.length - 1}
-                      className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-all"
+                      className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-slate-100 transition-all hover:bg-slate-200 disabled:opacity-40"
                     >
                       <ChevronRight className="w-4 h-4 text-slate-600" />
                     </button>
@@ -1293,8 +1296,9 @@ function CustomerPortal() {
                   {reviews.map((_, idx) => (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => setReviewIdx(idx)}
-                      className={`h-2 rounded-full transition-all duration-300 ${idx === reviewIdx ? "w-6 bg-orange-500" : "w-2 bg-slate-200"}`}
+                      className={`h-3 rounded-full transition-all duration-300 ${idx === reviewIdx ? "w-6 bg-orange-500" : "w-3 bg-slate-200"}`}
                     />
                   ))}
                 </div>
@@ -1315,8 +1319,9 @@ function CustomerPortal() {
                     className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300"
                   >
                     <button
+                      type="button"
                       onClick={() => setOpenFaq(openFaq === item.id ? null : item.id)}
-                      className="w-full flex items-center justify-between p-4 text-left bg-white hover:bg-slate-50 transition-colors"
+                      className="flex min-h-12 w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50"
                     >
                       <span className="font-medium text-sm text-slate-800 pr-4">
                         {item.question}

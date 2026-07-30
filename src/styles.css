@@ -157,14 +157,24 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    font-family: var(--font-sans);
+    touch-action: manipulation;
+  }
   body {
     background-color: var(--color-background);
     background-image: radial-gradient(circle at top left, rgba(182, 124, 47, 0.18), transparent 28%), linear-gradient(135deg, rgba(255, 250, 243, 0.96), rgba(248, 239, 228, 0.95));
     color: var(--color-foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+  button, input, select, textarea, a {
+    touch-action: manipulation;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font-weight: 600; }
 }

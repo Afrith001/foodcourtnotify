@@ -13,7 +13,7 @@ import { $ as Navigation, At as CreditCard, D as Smartphone, Ht as ChevronDown, 
 import { t as optimizedImageUrl } from "./images-BnAPhdvv.mjs";
 import { n as formatCurrency, t as buildReceiptText } from "./pos-BKnCkGZE.mjs";
 import { n as generateUniqueOrderId, o as notifyOrderStatusChange } from "./order-utils-BPm42f6Q.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/billing-BIXlOGSv.js
+//#region node_modules/.nitro/vite/services/ssr/assets/billing-CXf_NsuZ.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function optimizedProductImage(url) {
@@ -72,7 +72,7 @@ function MobileBilling({ shop, products, categories, search, setSearch, selected
 	const [paymentOpen, setPaymentOpen] = (0, import_react.useState)(false);
 	const currency = shop?.currency ?? "INR";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-		className: "md:hidden pb-28",
+		className: "touch-manipulation pb-28 md:hidden",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 				className: "sticky top-0 z-20 -mx-3 mb-4 border-b border-slate-100 bg-white/95 px-3 pb-3 pt-2 backdrop-blur",
@@ -105,10 +105,12 @@ function MobileBilling({ shop, products, categories, search, setSearch, selected
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
 							onClick: () => setSelectedCategoryId(null),
 							className: `min-h-12 shrink-0 rounded-full px-4 text-sm font-bold ${selectedCategoryId === null ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-700"}`,
 							children: "All"
 						}), categories.map((category) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
 							onClick: () => setSelectedCategoryId(category.id),
 							className: `min-h-12 shrink-0 rounded-full px-4 text-sm font-bold ${selectedCategoryId === category.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-700"}`,
 							children: category.name
@@ -128,6 +130,7 @@ function MobileBilling({ shop, products, categories, search, setSearch, selected
 				children: "No products match this filter."
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+				type: "button",
 				onClick: () => setCartOpen(true),
 				className: "fixed bottom-5 right-4 z-30 flex min-h-14 items-center gap-3 rounded-2xl bg-slate-900 px-5 text-left text-white shadow-xl shadow-slate-900/25 active:scale-95",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShoppingBag, { className: "h-5 w-5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", {
@@ -158,9 +161,10 @@ function MobileBilling({ shop, products, categories, search, setSearch, selected
 								className: "text-xl font-extrabold text-slate-900",
 								children: "Your cart"
 							})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
 								"aria-label": "Close cart",
 								onClick: () => setCartOpen(false),
-								className: "grid h-12 w-12 place-items-center rounded-2xl bg-slate-100",
+								className: "grid h-12 w-12 min-h-12 min-w-12 place-items-center rounded-2xl bg-slate-100",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, {})
 							})]
 						}),
