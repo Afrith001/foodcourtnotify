@@ -1,4 +1,4 @@
-//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-CADemcaj.js
+//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-CjaodTmj.js
 var tsrStartManifest = () => ({ routes: {
 	__root__: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/__root.tsx",
@@ -10,7 +10,7 @@ var tsrStartManifest = () => ({ routes: {
 			"/order/$shopCode"
 		],
 		preloads: [
-			"/assets/index-DQXQEzGV.js",
+			"/assets/index-DayO8VbB.js",
 			"/assets/jsx-runtime-n5LQ9ujS.js",
 			"/assets/useRouter-BYURwv8V.js",
 			"/assets/useStore-jtaC5ju5.js",
@@ -19,14 +19,14 @@ var tsrStartManifest = () => ({ routes: {
 		scripts: [{ attrs: {
 			type: "module",
 			async: !0,
-			src: "/assets/index-DQXQEzGV.js"
+			src: "/assets/index-DayO8VbB.js"
 		} }]
 	},
 	"/": {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/index.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/routes-BOlXDwPq.js",
+			"/assets/routes-CwSpqzM7.js",
 			"/assets/createLucideIcon-D1l_1SOF.js",
 			"/assets/bell-BSIaj4e6.js",
 			"/assets/chart-column-CdsnKUVy.js",
@@ -63,7 +63,7 @@ var tsrStartManifest = () => ({ routes: {
 			"/_authenticated/tracking"
 		],
 		preloads: [
-			"/assets/route-DrBDRGBZ.js",
+			"/assets/route-BRT-h8U1.js",
 			"/assets/firebase-65Dd5kc9.js",
 			"/assets/utils-B6KiDbIe.js",
 			"/assets/createLucideIcon-D1l_1SOF.js",
@@ -87,7 +87,7 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/auth.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/auth-DYHQ4PrF.js",
+			"/assets/auth-oSU1KQ5Z.js",
 			"/assets/firebase-65Dd5kc9.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/tabs-Dw_rz3vU.js",
@@ -97,7 +97,8 @@ var tsrStartManifest = () => ({ routes: {
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
 			"/assets/input-CVldN3Xd.js",
-			"/assets/sonner-Cn__Vcyh.js"
+			"/assets/sonner-Cn__Vcyh.js",
+			"/assets/shop-code-_hA4jzhQ.js"
 		]
 	},
 	"/_authenticated/admin": {
@@ -113,9 +114,9 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/analytics.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/analytics-CuESKvx6.js",
+			"/assets/analytics-Cpx6BH38.js",
 			"/assets/generateCategoricalChart-CCFfPBBw.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/card-D19pffDm.js"
 		]
 	},
@@ -123,7 +124,7 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/billing.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/billing-BqEynOuq.js",
+			"/assets/billing-Bh0NRpZ1.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/navigation-CuoWaqg1.js",
 			"/assets/plus-BCxKnURr.js",
@@ -151,13 +152,13 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/campaigns.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/campaigns-Co65mmQe.js",
+			"/assets/campaigns-BJqlQQeP.js",
 			"/assets/select-Dx0ykkMB.js",
 			"/assets/dialog-DUgX6jqm.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/plus-BCxKnURr.js",
 			"/assets/send-CXakpLH6.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/badge-CTurDi5W.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
@@ -183,13 +184,13 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/coupons.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/coupons-c7s-lMyT.js",
+			"/assets/coupons-DMuxdY0Q.js",
 			"/assets/dialog-DUgX6jqm.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/switch-BffjpDbt.js",
 			"/assets/plus-BCxKnURr.js",
 			"/assets/trash-2-amUGsBKV.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
 			"/assets/input-CVldN3Xd.js"
@@ -199,10 +200,10 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/customers.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/customers-BZ7c7W0p.js",
+			"/assets/customers-3lRuNv-J.js",
 			"/assets/download-CFLYpaLV.js",
 			"/assets/search-Ci8TbkAa.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
 			"/assets/input-CVldN3Xd.js",
@@ -213,11 +214,11 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/dashboard.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/dashboard-Cr29umNM.js",
-			"/assets/qr-CZAsl5TU.js",
+			"/assets/dashboard-DXm5iRmA.js",
+			"/assets/qr-CZgTGkIX.js",
 			"/assets/check-CQQm2O1c.js",
 			"/assets/shopping-bag-BVBDJj_i.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/button-CXIyabjr.js"
 		]
 	},
@@ -249,11 +250,11 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/notifications.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/notifications-SNeD7QXL.js",
+			"/assets/notifications-BTWVZbfo.js",
 			"/assets/bell-BSIaj4e6.js",
 			"/assets/check-CQQm2O1c.js",
 			"/assets/trash-2-amUGsBKV.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js"
 		]
@@ -262,7 +263,7 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/orders.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/orders-DnLLX6Qt.js",
+			"/assets/orders-Dh6BZzaH.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/tabs-Dw_rz3vU.js",
 			"/assets/subDays-CkMK0LBl.js",
@@ -271,7 +272,7 @@ var tsrStartManifest = () => ({ routes: {
 			"/assets/search-Ci8TbkAa.js",
 			"/assets/smartphone-Jx-XBhyT.js",
 			"/assets/user-BdoWc4K7.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/badge-CTurDi5W.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
@@ -304,8 +305,8 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/qr.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/qr-Bo275NpB.js",
-			"/assets/qr-CZAsl5TU.js",
+			"/assets/qr-Dr_YzSVL.js",
+			"/assets/qr-CZgTGkIX.js",
 			"/assets/download-CFLYpaLV.js",
 			"/assets/printer-CujCpd7c.js",
 			"/assets/button-CXIyabjr.js",
@@ -333,7 +334,7 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/restaurant.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/restaurant-BLngU6Rw.js",
+			"/assets/restaurant-DasuHNXf.js",
 			"/assets/dist-C2J943E6.js",
 			"/assets/dist-DfrsdsZi.js",
 			"/assets/dist-_I8HCT0r.js",
@@ -350,7 +351,7 @@ var tsrStartManifest = () => ({ routes: {
 			"/assets/loader-circle-Bw_c8Wc_.js",
 			"/assets/plus-BCxKnURr.js",
 			"/assets/trash-2-amUGsBKV.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/badge-CTurDi5W.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
@@ -362,11 +363,11 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/settings.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/settings-BMcEJMqa.js",
+			"/assets/settings-jOTi-2pT.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/tabs-Dw_rz3vU.js",
 			"/assets/switch-BffjpDbt.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js",
 			"/assets/input-CVldN3Xd.js"
@@ -389,9 +390,9 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/_authenticated/subscription.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/subscription-CoKcjEkR.js",
+			"/assets/subscription-BDPlF1VZ.js",
 			"/assets/check-CQQm2O1c.js",
-			"/assets/useTranslation-Df5LUmbk.js",
+			"/assets/useTranslation-CBse8X_z.js",
 			"/assets/badge-CTurDi5W.js",
 			"/assets/button-CXIyabjr.js",
 			"/assets/card-D19pffDm.js"
@@ -418,7 +419,7 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Mohammed/OneDrive/Desktop/food-court-connect-53-main/food-court-connect-53-main/src/routes/order.$shopCode.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/order._shopCode-D_ZbVtgz.js",
+			"/assets/order._shopCode-DsOyQaT5.js",
 			"/assets/firebase-65Dd5kc9.js",
 			"/assets/label-BlscnSvE.js",
 			"/assets/createLucideIcon-D1l_1SOF.js",

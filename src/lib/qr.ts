@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { buildShopPortalUrl } from "./shop-code";
 
 export async function generateQrDataUrl(url: string, color = "#0a3d2b"): Promise<string> {
   return QRCode.toDataURL(url, {
@@ -10,7 +11,5 @@ export async function generateQrDataUrl(url: string, color = "#0a3d2b"): Promise
 }
 
 export function buildPortalUrl(shopCode: string): string {
-  const baseUrl = import.meta.env.VITE_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
-  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
-  return `${normalizedBaseUrl}/order/${shopCode}`;
+  return buildShopPortalUrl(shopCode);
 }

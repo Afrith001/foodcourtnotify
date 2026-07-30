@@ -1,6 +1,7 @@
 import { o as __toESM } from "../_runtime.mjs";
+import { t as buildShopPortalUrl } from "./shop-code-DdMqYUoH.mjs";
 import { t as require_lib } from "../_libs/qrcode.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/qr-DQz9_30d.js
+//#region node_modules/.nitro/vite/services/ssr/assets/qr-Cv02SMs8.js
 var import_lib = /* @__PURE__ */ __toESM(require_lib());
 async function generateQrDataUrl(url, color = "#0a3d2b") {
 	return import_lib.toDataURL(url, {
@@ -14,7 +15,7 @@ async function generateQrDataUrl(url, color = "#0a3d2b") {
 	});
 }
 function buildPortalUrl(shopCode) {
-	return `${"https://food-court-notify.vercel.app".replace(/\/+$/, "")}/order/${shopCode}`;
+	return buildShopPortalUrl(shopCode);
 }
 //#endregion
 export { generateQrDataUrl as n, buildPortalUrl as t };

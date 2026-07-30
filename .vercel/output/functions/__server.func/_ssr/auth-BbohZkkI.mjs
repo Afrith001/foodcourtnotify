@@ -7,34 +7,18 @@ import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { s as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { a as CardTitle, i as CardHeader, n as CardContent, r as CardDescription, t as Card } from "./card-ZV2o_Ft7.mjs";
 import { _ as useNavigate, g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as Route } from "./auth-DlKPnlM9.mjs";
+import { t as Route } from "./auth-DxtYGEyy.mjs";
 import { t as Input } from "./input-B-tDUnPX.mjs";
 import { t as Label } from "./label-DBD1bRRP.mjs";
 import { t as Button } from "./button-ufo6MiTZ.mjs";
+import { n as pickUniqueShopCode } from "./shop-code-DdMqYUoH.mjs";
 import { i as TabsTrigger, n as TabsContent, r as TabsList, t as Tabs } from "./tabs-WFFmfsjP.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { t as Toaster$1 } from "./sonner-DoFKumIW.mjs";
 import { Ut as ChefHat, mt as LoaderCircle } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/auth-BNIjZ3LV.js
+//#region node_modules/.nitro/vite/services/ssr/assets/auth-BbohZkkI.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function generateShopCode(len = 6) {
-	let out = "";
-	for (let i = 0; i < len; i++) out += ALPHABET[Math.floor(Math.random() * 32)];
-	return out;
-}
-/** Pick a shop code that isn't taken yet. Best-effort uniqueness check. */
-async function pickUniqueShopCode() {
-	const db = getDb();
-	for (let attempt = 0; attempt < 8; attempt++) {
-		const code = generateShopCode(6);
-		doc(db, COL.shops, `code_${code}`);
-		const { query, where, collection, getDocs, limit } = await import("../_libs/firebase.mjs").then((n) => n.t);
-		if ((await getDocs(query(collection(db, COL.shops), where("shopCode", "==", code), limit(1)))).empty) return code;
-	}
-	return generateShopCode(8);
-}
 function describeAuthError(err) {
 	switch (err?.code ?? "") {
 		case "auth/invalid-credential":

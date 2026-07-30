@@ -9,8 +9,8 @@ import { t as useTranslation } from "../_libs/react-i18next.mjs";
 import { t as Button } from "./button-ufo6MiTZ.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { Wt as Check, a as Watch, k as ShoppingBag } from "../_libs/lucide-react.mjs";
-import { n as generateQrDataUrl, t as buildPortalUrl } from "./qr-DQz9_30d.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/dashboard-CJ4B3yD3.js
+import { n as generateQrDataUrl, t as buildPortalUrl } from "./qr-Cv02SMs8.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/dashboard-tLqJ4icn.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function Dashboard() {

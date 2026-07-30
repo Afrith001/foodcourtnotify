@@ -6,8 +6,8 @@ import { a as CardTitle, i as CardHeader, n as CardContent, r as CardDescription
 import { t as Button } from "./button-ufo6MiTZ.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { H as Printer, Ot as Download, V as QrCode } from "../_libs/lucide-react.mjs";
-import { n as generateQrDataUrl, t as buildPortalUrl } from "./qr-DQz9_30d.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/qr-BBLP-uuW.js
+import { n as generateQrDataUrl, t as buildPortalUrl } from "./qr-Cv02SMs8.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/qr-DlK8_qxr.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function QrPage() {

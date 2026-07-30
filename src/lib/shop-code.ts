@@ -3,6 +3,21 @@ import { getDb, COL } from "./firebase";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no confusing chars
 
+export function getAppBaseUrl(): string {
+  const configuredBaseUrl = import.meta.env.VITE_APP_URL?.trim();
+  if (configuredBaseUrl) return configuredBaseUrl.replace(/\/+$/, "");
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+  return "";
+}
+
+export function buildShopPortalUrl(shopCode: string): string {
+  const baseUrl = getAppBaseUrl();
+  if (!baseUrl) return `/order/${shopCode}`;
+  return `${baseUrl}/order/${shopCode}`;
+}
+
 export function generateShopCode(len = 6): string {
   let out = "";
   for (let i = 0; i < len; i++) {

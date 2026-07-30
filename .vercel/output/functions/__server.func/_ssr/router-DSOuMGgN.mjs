@@ -3,10 +3,10 @@ import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { s as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, m as createFileRoute, p as lazyRouteComponent, s as Scripts, y as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { t as i18n_default } from "./i18n-BnUAatYi.mjs";
-import { t as Route$26 } from "./auth-DlKPnlM9.mjs";
+import { t as Route$26 } from "./auth-DxtYGEyy.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-C-f66OMk.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-DSOuMGgN.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-N8NVQgZg.css";
@@ -210,7 +210,7 @@ var Route$16 = createFileRoute("/_authenticated/restaurant")({
 });
 var $$splitComponentImporter$15 = () => import("./reports-DYNQ_IVx.mjs");
 var Route$15 = createFileRoute("/_authenticated/reports")({ component: lazyRouteComponent($$splitComponentImporter$15, "component") });
-var $$splitComponentImporter$14 = () => import("./qr-BBLP-uuW.mjs");
+var $$splitComponentImporter$14 = () => import("./qr-DlK8_qxr.mjs");
 var Route$14 = createFileRoute("/_authenticated/qr")({ component: lazyRouteComponent($$splitComponentImporter$14, "component") });
 var $$splitComponentImporter$13 = () => import("./products-BJOz5u59.mjs");
 var Route$13 = createFileRoute("/_authenticated/products")({ component: lazyRouteComponent($$splitComponentImporter$13, "component") });
@@ -228,7 +228,7 @@ var $$splitComponentImporter$10 = () => import("./kitchen-DdK_pTWt.mjs");
 var Route$10 = createFileRoute("/_authenticated/kitchen")({ component: lazyRouteComponent($$splitComponentImporter$10, "component") });
 var $$splitComponentImporter$9 = () => import("./inventory-ztWLI2eA.mjs");
 var Route$9 = createFileRoute("/_authenticated/inventory")({ component: lazyRouteComponent($$splitComponentImporter$9, "component") });
-var $$splitComponentImporter$8 = () => import("./dashboard-CJ4B3yD3.mjs");
+var $$splitComponentImporter$8 = () => import("./dashboard-tLqJ4icn.mjs");
 var Route$8 = createFileRoute("/_authenticated/dashboard")({
 	head: () => ({ meta: [{ title: `${i18n_default.t("common.dashboard")} · ${i18n_default.t("common.appName")}` }] }),
 	component: lazyRouteComponent($$splitComponentImporter$8, "component")
