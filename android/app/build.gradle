@@ -44,6 +44,19 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+def publicDownloadsDir = file("$projectDir/../../public/downloads")
+
+task copyDebugApkToPublicDownloads(type: Copy) {
+    dependsOn "assembleDebug"
+    from "$buildDir/outputs/apk/debug/app-debug.apk"
+    into publicDownloadsDir
+    rename { "nexavo-pos.apk" }
+}
+
+tasks.named("assembleDebug") {
+    finalizedBy(copyDebugApkToPublicDownloads)
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {

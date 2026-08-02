@@ -8,6 +8,12 @@
       }
     },
     {
+      "src": "/downloads/(.*)",
+      "headers": {
+        "content-type": "application/vnd.android.package-archive"
+      }
+    },
+    {
       "handle": "filesystem"
     },
     {

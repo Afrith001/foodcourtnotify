@@ -44,19 +44,22 @@ function Landing() {
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
             Run billing, manage products, coordinate kitchen orders, send live customer updates and keep every transaction in Firebase. Set up in 60 seconds.
           </p>
-          <div className="mt-10 flex gap-3 justify-center">
-            <Link to="/auth" search={{ mode: "signup" }}>
-              <Button size="lg" className="shadow-elev">Launch Nexavo POS</Button>
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link to="/auth" search={{ mode: "signup" }} className="w-full sm:w-auto">
+              <Button size="lg" className="shadow-elev w-full sm:w-auto">Launch Nexavo POS</Button>
             </Link>
             <a
               href="/downloads/nexavo-pos.apk"
               download
-              className="inline-flex items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform"
+              type="application/vnd.android.package-archive"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform"
               aria-label="Download Nexavo POS APK"
             >
               Download Now
             </a>
-            <Link to="/auth"><Button size="lg" variant="outline">Sign in</Button></Link>
+            <Link to="/auth" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Sign in</Button>
+            </Link>
           </div>
           <div className="mt-4 text-xs text-muted-foreground">All your POS workflows stay connected in one Firebase-powered workspace.</div>
         </div>
