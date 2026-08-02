@@ -6,10 +6,10 @@ import { t as i18n_default } from "./i18n-BnUAatYi.mjs";
 import { t as Route$26 } from "./auth-COFleP6j.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-DXoqGMGU.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-BtdKYoQx.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var styles_default = "/assets/styles-DWOv03Fx.css";
+var styles_default = "/assets/styles-Drw_EPV5.css";
 function reportLovableError(error, context = {}) {
 	if (typeof window === "undefined") return;
 	window.__lovableEvents?.captureException?.(error, {
@@ -168,7 +168,7 @@ var Route$23 = createFileRoute("/_authenticated")({
 	ssr: false,
 	component: lazyRouteComponent($$splitComponentImporter$23, "component")
 });
-var $$splitComponentImporter$22 = () => import("./routes-B-ORQONO.mjs");
+var $$splitComponentImporter$22 = () => import("./routes-DvIyJt3A.mjs");
 var Route$22 = createFileRoute("/")({
 	head: () => ({ meta: [
 		{ title: "Nexavo POS — Smart Billing + Live Customer Order Tracking" },

@@ -2,7 +2,7 @@ import { s as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].m
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { t as Button } from "./button-l9FdWCHm.mjs";
 import { It as ChefHat, R as QrCode, Wt as Bell, _ as Ticket, jt as CircleCheck, l as Users, zt as ChartColumn } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-B-ORQONO.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-DvIyJt3A.js
 var import_jsx_runtime = require_jsx_runtime();
 function Landing() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -59,30 +59,43 @@ function Landing() {
 							children: "Run billing, manage products, coordinate kitchen orders, send live customer updates and keep every transaction in Firebase. Set up in 60 seconds."
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "mt-10 flex gap-3 justify-center",
+							className: "mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
-									to: "/auth",
-									search: { mode: "signup" },
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-										size: "lg",
-										className: "shadow-elev",
-										children: "Launch Nexavo POS"
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "w-full sm:w-auto",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+										to: "/auth",
+										search: { mode: "signup" },
+										className: "block w-full",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+											size: "lg",
+											className: "shadow-elev w-full",
+											children: "Launch Nexavo POS"
+										})
 									})
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-									href: "/downloads/nexavo-pos.apk",
-									download: true,
-									className: "inline-flex items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform",
-									"aria-label": "Download Nexavo POS APK",
-									children: "Download Now"
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "w-full sm:w-auto",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+										href: "/downloads/nexavo-pos.apk",
+										download: true,
+										type: "application/vnd.android.package-archive",
+										className: "inline-flex w-full items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform",
+										"aria-label": "Download Nexavo POS APK",
+										children: "Download Now"
+									})
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
-									to: "/auth",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-										size: "lg",
-										variant: "outline",
-										children: "Sign in"
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "w-full sm:w-auto",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+										to: "/auth",
+										className: "block w-full",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+											size: "lg",
+											variant: "outline",
+											className: "w-full",
+											children: "Sign in"
+										})
 									})
 								})
 							]

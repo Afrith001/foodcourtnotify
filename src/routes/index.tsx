@@ -44,22 +44,28 @@ function Landing() {
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
             Run billing, manage products, coordinate kitchen orders, send live customer updates and keep every transaction in Firebase. Set up in 60 seconds.
           </p>
-          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link to="/auth" search={{ mode: "signup" }} className="w-full sm:w-auto">
-              <Button size="lg" className="shadow-elev w-full sm:w-auto">Launch Nexavo POS</Button>
-            </Link>
-            <a
-              href="/downloads/nexavo-pos.apk"
-              download
-              type="application/vnd.android.package-archive"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform"
-              aria-label="Download Nexavo POS APK"
-            >
-              Download Now
-            </a>
-            <Link to="/auth" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">Sign in</Button>
-            </Link>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <div className="w-full sm:w-auto">
+              <Link to="/auth" search={{ mode: "signup" }} className="block w-full">
+                <Button size="lg" className="shadow-elev w-full">Launch Nexavo POS</Button>
+              </Link>
+            </div>
+            <div className="w-full sm:w-auto">
+              <a
+                href="/downloads/nexavo-pos.apk"
+                download
+                type="application/vnd.android.package-archive"
+                className="inline-flex w-full items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform"
+                aria-label="Download Nexavo POS APK"
+              >
+                Download Now
+              </a>
+            </div>
+            <div className="w-full sm:w-auto">
+              <Link to="/auth" className="block w-full">
+                <Button size="lg" variant="outline" className="w-full">Sign in</Button>
+              </Link>
+            </div>
           </div>
           <div className="mt-4 text-xs text-muted-foreground">All your POS workflows stay connected in one Firebase-powered workspace.</div>
         </div>
