@@ -53,7 +53,7 @@ function TrackingPage() {
       const data = snap.data() as Partial<Order>;
       setOrder((current) => (current ? { ...current, ...data, id: snap.id } as Order : null));
     }, (error) => {
-      console.error("[tracking] order listener failed", error);
+      if (import.meta.env.DEV) console.error("[tracking] order listener failed", error);
       setLookupError("Live updates are temporarily unavailable. Please refresh and try again.");
     });
     return () => unsub();
@@ -121,7 +121,7 @@ function TrackingPage() {
       setOrder({ id: matched.id, ...data, orderNumber: data.orderNumber ?? 0, customerMobile: normalizedMobile } as Order);
       toast.success("Order found. Live tracking is now active.");
     } catch (error) {
-      console.error("[tracking] lookup failed", error);
+      if (import.meta.env.DEV) console.error("[tracking] lookup failed", error);
       const message = "We could not look up that order right now. Please try again shortly.";
       setLookupError(message);
       toast.error(message);

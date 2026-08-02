@@ -47,19 +47,14 @@ export const Route = createFileRoute("/_authenticated/billing")({
 type Product = {
   id: string;
   name: string;
+  description?: string | null;
   price: number;
-  costPrice: number;
-  taxRate: number;
-  discount: number;
-  stock: number;
-  lowStockThreshold: number;
+  taxRate?: number;
+  discount?: number;
   categoryId?: string | null;
-  preparationTime: number;
-  veg: boolean;
+  preparationTime?: number;
   available: boolean;
   imageUrl?: string | null;
-  sku?: string | null;
-  barcode?: string | null;
 };
 
 type Category = {
@@ -75,20 +70,18 @@ function optimizedProductImage(url?: string | null) {
 }
 
 const MobileProductCard = memo(function MobileProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product) => void }) {
-  const outOfStock = product.stock <= 0;
-  const lowStock = product.stock <= product.lowStockThreshold;
+  const unavailable = product.available === false;
   return (
     <article className="mobile-product-card rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
       <img src={optimizedProductImage(product.imageUrl)} alt={product.name} loading="lazy" decoding="async" width="480" height="240" className="h-36 w-full rounded-2xl object-cover bg-slate-100" />
       <div className="mt-3 space-y-2">
         <h2 className="text-sm font-bold leading-5 text-slate-900">{product.name}</h2>
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${product.veg ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{product.veg ? "Veg" : "Non-Veg"}</span>
-          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${outOfStock ? "bg-rose-50 text-rose-700" : lowStock ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{outOfStock ? "Out of stock" : `${product.stock} in stock`}</span>
+          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${unavailable ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{unavailable ? "Unavailable" : "Available"}</span>
         </div>
         <div className="flex items-center justify-between gap-2 pt-1">
           <span className="text-base font-extrabold text-slate-900">₹{product.price}</span>
-          <button type="button" disabled={outOfStock} onClick={() => onAdd(product)} className="min-h-12 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white transition-transform active:scale-95 disabled:bg-slate-200">Add</button>
+          <button type="button" disabled={unavailable} onClick={() => onAdd(product)} className="min-h-12 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white transition-transform active:scale-95 disabled:bg-slate-200">Add</button>
         </div>
       </div>
     </article>
@@ -196,7 +189,7 @@ function BillingPage() {
     const term = deferredSearch.toLowerCase().trim();
     if (term) {
       list = list.filter((p) =>
-        [p.name, p.sku, p.barcode]
+        [p.name, p.description]
           .filter(Boolean)
           .some((val) => (val ?? "").toLowerCase().includes(term))
       );
@@ -255,7 +248,6 @@ function BillingPage() {
           taxRate: product.taxRate ?? 0,
           discount: product.discount ?? 0,
           preparationTime: product.preparationTime ?? 0,
-          veg: product.veg ?? true,
           imageUrl: product.imageUrl ?? null,
           variant: "Regular",
           notes: "",
@@ -364,7 +356,6 @@ function BillingPage() {
           taxRate: item.taxRate,
           discount: item.discount,
           preparationTime: item.preparationTime,
-          veg: item.veg,
           imageUrl: item.imageUrl || null,
           notes: item.notes || null,
           variant: item.variant || null,
@@ -519,7 +510,7 @@ function BillingPage() {
         upiAmount={upiAmount} setUpiAmount={setUpiAmount} cardAmount={cardAmount} setCardAmount={setCardAmount}
         splitSumMatches={splitSumMatches} saving={saving} onCheckout={handleCheckout}
       />
-    <div className="hidden md:flex flex-col gap-5 h-[calc(100vh-120px)] overflow-hidden text-[#4a0f0f] select-none">
+    <div className="hidden md:flex flex-col gap-5 flex-1 min-h-0 overflow-hidden text-[#4a0f0f] select-none">
       {/* 3-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_370px] xl:grid-cols-[1fr_370px_320px] gap-5 flex-1 min-h-0 overflow-hidden">
         
@@ -572,13 +563,12 @@ function BillingPage() {
                 </div>
               ) : (
                 displayedProducts.map((p) => {
-                  const lowStock = p.stock <= p.lowStockThreshold;
-                  const outOfStock = p.stock <= 0;
+                  const unavailable = p.available === false;
                   return (
                     <div
                       key={p.id}
                       className={`flex flex-col justify-between overflow-hidden rounded-[24px] border border-slate-100 bg-white text-left shadow-sm transition-all duration-200 ${
-                        outOfStock
+                        unavailable
                           ? "opacity-60 cursor-not-allowed"
                           : "hover:-translate-y-0.5 hover:shadow-md"
                       }`}
@@ -598,37 +588,27 @@ function BillingPage() {
                     {/* Food Details */}
                     <div className="p-4 flex-1 flex flex-col justify-between gap-3">
                       <div>
-                        {/* Title & Veg Pill */}
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="font-bold text-[14px] text-slate-800 line-clamp-2 leading-tight min-h-[40px] block">
                             {p.name}
                           </h3>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 leading-none mt-0.5 ${
-                              p.veg
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                : "bg-rose-50 text-rose-700 border border-rose-100"
-                            }`}
-                          >
-                            {p.veg ? "Veg" : "Non-Veg"}
-                          </span>
                         </div>
 
-                        {/* Price & Stock info */}
+                        {/* Price & availability info */}
                         <div className="flex items-baseline justify-between mt-2.5">
                           <span className="text-[14px] font-extrabold text-slate-800">
                             {formatCurrency(p.price, shop.currency ?? "INR")}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-50 text-slate-600 border border-slate-100">
-                            {outOfStock ? "Out of Stock" : "Stock"}
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${unavailable ? "bg-rose-50 text-rose-700 border-rose-100" : "bg-emerald-50 text-emerald-700 border-emerald-100"}`}>
+                            {unavailable ? "Unavailable" : "Available"}
                           </span>
                         </div>
                       </div>
 
                       {/* Add Button */}
                       <button
-                        onClick={() => !outOfStock && addToCart(p)}
-                        disabled={outOfStock}
+                        onClick={() => !unavailable && addToCart(p)}
+                        disabled={unavailable}
                         className="w-full mt-1.5 py-2.5 rounded-xl bg-[#FF7A00] hover:bg-[#E06B00] active:scale-[0.98] text-xs font-bold text-white shadow-sm transition-all text-center focus:outline-none"
                       >
                         Add

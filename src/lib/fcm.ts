@@ -38,7 +38,7 @@ export async function requestNotificationPermissionAndSaveToken(
     }
     return token;
   } catch (e) {
-    console.warn("[fcm] permission/token failed", e);
+    if (import.meta.env.DEV) console.warn("[fcm] permission/token failed", e);
     return null;
   }
 }

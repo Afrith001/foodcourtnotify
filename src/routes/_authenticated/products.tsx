@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Search, PlusCircle, UploadCloud, Trash2, PencilLine, ShoppingBag } from "lucide-react";
@@ -23,17 +22,8 @@ type Product = {
   name: string;
   description?: string | null;
   price: number;
-  costPrice: number;
-  taxRate: number;
-  discount: number;
-  stock: number;
-  lowStockThreshold: number;
   preparationTime: number;
-  veg: boolean;
-  available: boolean;
   categoryId?: string | null;
-  sku?: string | null;
-  barcode?: string | null;
   imageUrl?: string | null;
 };
 
@@ -51,17 +41,8 @@ function ProductsPage() {
     name: "",
     description: "",
     price: "0",
-    costPrice: "0",
-    taxRate: "0",
-    discount: "0",
-    stock: "0",
-    lowStockThreshold: "5",
     preparationTime: "10",
-    veg: true,
-    available: true,
     categoryId: "",
-    sku: "",
-    barcode: "",
     imageUrl: "",
   });
 
@@ -81,12 +62,12 @@ function ProductsPage() {
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim();
     if (!term) return products;
-    return products.filter((product) => [product.name, product.sku, product.barcode, product.description].filter(Boolean).some((value) => (value ?? "").toLowerCase().includes(term)));
+    return products.filter((product) => [product.name, product.description].filter(Boolean).some((value) => (value ?? "").toLowerCase().includes(term)));
   }, [products, search]);
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ name: "", description: "", price: "0", costPrice: "0", taxRate: "0", discount: "0", stock: "0", lowStockThreshold: "5", preparationTime: "10", veg: true, available: true, categoryId: categories[0]?.id ?? "", sku: "", barcode: "", imageUrl: "" });
+    setForm({ name: "", description: "", price: "0", preparationTime: "10", categoryId: categories[0]?.id ?? "", imageUrl: "" });
   };
 
   useEffect(() => {
@@ -170,17 +151,8 @@ function ProductsPage() {
       name: form.name.trim(),
       description: form.description.trim() || null,
       price: Number(form.price) || 0,
-      costPrice: Number(form.costPrice) || 0,
-      taxRate: Number(form.taxRate) || 0,
-      discount: Number(form.discount) || 0,
-      stock: Number(form.stock) || 0,
-      lowStockThreshold: Number(form.lowStockThreshold) || 0,
       preparationTime: Number(form.preparationTime) || 0,
-      veg: form.veg,
-      available: form.available,
       categoryId: form.categoryId || null,
-      sku: form.sku.trim() || null,
-      barcode: form.barcode.trim() || null,
       imageUrl: form.imageUrl || null,
     };
     try {
@@ -205,17 +177,8 @@ function ProductsPage() {
       name: product.name,
       description: product.description ?? "",
       price: String(product.price ?? 0),
-      costPrice: String(product.costPrice ?? 0),
-      taxRate: String(product.taxRate ?? 0),
-      discount: String(product.discount ?? 0),
-      stock: String(product.stock ?? 0),
-      lowStockThreshold: String(product.lowStockThreshold ?? 0),
       preparationTime: String(product.preparationTime ?? 0),
-      veg: product.veg ?? true,
-      available: product.available ?? true,
       categoryId: product.categoryId ?? "",
-      sku: product.sku ?? "",
-      barcode: product.barcode ?? "",
       imageUrl: product.imageUrl ?? "",
     });
   };
@@ -236,7 +199,7 @@ function ProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-3xl font-bold">Product Management</h1>
-        <p className="text-sm text-muted-foreground">Create, edit and manage your catalog, images, stock and pricing in Firebase.</p>
+        <p className="text-sm text-muted-foreground">Create, edit and manage your catalog, images, and pricing in Firebase.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -246,26 +209,29 @@ function ProductsPage() {
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={saveProduct}>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1.5"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
-                <div className="space-y-1.5"><Label>SKU</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Barcode</Label><Input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Category</Label><Select value={form.categoryId} onValueChange={(value) => setForm({ ...form, categoryId: value })}><SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger><SelectContent>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
+              <div className="rounded-xl border border-border/70 bg-muted/30 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">1</span>
+                  Basic info
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5 md:col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+                  <div className="space-y-1.5 md:col-span-2"><Label>Category</Label><Select value={form.categoryId} onValueChange={(value) => setForm({ ...form, categoryId: value })}><SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger><SelectContent>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                </div>
               </div>
-              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1.5"><Label>Price</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Cost Price</Label><Input type="number" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Tax (%)</Label><Input type="number" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Discount (%)</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Low Stock</Label><Input type="number" value={form.lowStockThreshold} onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Prep Time (min)</Label><Input type="number" value={form.preparationTime} onChange={(e) => setForm({ ...form, preparationTime: e.target.value })} /></div>
+
+              <div className="rounded-xl border border-border/70 bg-background/70 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">2</span>
+                  Pricing & prep
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5"><Label>Price</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>
+                  <div className="space-y-1.5"><Label>Prep Time (min)</Label><Input type="number" value={form.preparationTime} onChange={(e) => setForm({ ...form, preparationTime: e.target.value })} /></div>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2"><Switch checked={form.veg} onCheckedChange={(checked) => setForm({ ...form, veg: checked })} /><Label>Veg</Label></div>
-                <div className="flex items-center gap-2"><Switch checked={form.available} onCheckedChange={(checked) => setForm({ ...form, available: checked })} /><Label>Available</Label></div>
-              </div>
+
               <div className="space-y-2">
                 <Label>Product image</Label>
                 <div className="flex flex-col gap-3">
@@ -327,11 +293,8 @@ function ProductsPage() {
                     )}
                     <div className="min-w-0">
                       <div className="font-semibold truncate">{product.name}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground truncate">{product.sku || "—"} • {product.barcode || "—"}</div>
                       <div className="mt-1.5 flex flex-wrap gap-2 text-xs">
                         <Badge variant="secondary">₹{product.price}</Badge>
-                        <Badge variant="outline">Stock {product.stock}</Badge>
-                        <Badge variant={product.available ? "secondary" : "outline"}>{product.available ? "Available" : "Hidden"}</Badge>
                       </div>
                     </div>
                   </div>

@@ -2549,6 +2549,12 @@ async function linkEmailPassword(auth, request) {
 async function signInWithPassword(auth, request) {
 	return _performSignInRequest(auth, "POST", "/v1/accounts:signInWithPassword", _addTidIfNecessary(auth, request));
 }
+async function sendOobCode(auth, request) {
+	return _performApiRequest(auth, "POST", "/v1/accounts:sendOobCode", _addTidIfNecessary(auth, request));
+}
+async function sendPasswordResetEmail$1(auth, request) {
+	return sendOobCode(auth, request);
+}
 /**
 * @license
 * Copyright 2020 Google LLC
@@ -3862,6 +3868,25 @@ async function signInWithCredential(auth, credential) {
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+function _setActionCodeSettingsOnRequest(auth, request, actionCodeSettings) {
+	_assert(actionCodeSettings.url?.length > 0, auth, "invalid-continue-uri");
+	_assert(typeof actionCodeSettings.dynamicLinkDomain === "undefined" || actionCodeSettings.dynamicLinkDomain.length > 0, auth, "invalid-dynamic-link-domain");
+	_assert(typeof actionCodeSettings.linkDomain === "undefined" || actionCodeSettings.linkDomain.length > 0, auth, "invalid-hosting-link-domain");
+	request.continueUrl = actionCodeSettings.url;
+	request.dynamicLinkDomain = actionCodeSettings.dynamicLinkDomain;
+	request.linkDomain = actionCodeSettings.linkDomain;
+	request.canHandleCodeInApp = actionCodeSettings.handleCodeInApp;
+	if (actionCodeSettings.iOS) {
+		_assert(actionCodeSettings.iOS.bundleId.length > 0, auth, "missing-ios-bundle-id");
+		request.iOSBundleId = actionCodeSettings.iOS.bundleId;
+	}
+	if (actionCodeSettings.android) {
+		_assert(actionCodeSettings.android.packageName.length > 0, auth, "missing-android-pkg-name");
+		request.androidInstallApp = actionCodeSettings.android.installApp;
+		request.androidMinimumVersionCode = actionCodeSettings.android.minimumVersion;
+		request.androidPackageName = actionCodeSettings.android.packageName;
+	}
+}
 /**
 * @license
 * Copyright 2020 Google LLC
@@ -3894,6 +3919,51 @@ async function signInWithCredential(auth, credential) {
 async function recachePasswordPolicy(auth) {
 	const authInternal = _castAuth(auth);
 	if (authInternal._getPasswordPolicyInternal()) await authInternal._updatePasswordPolicy();
+}
+/**
+* Sends a password reset email to the given email address. This method does not throw an error when
+* there's no user account with the given email address and
+* {@link https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection | Email Enumeration Protection}
+* is enabled.
+*
+* @remarks
+* To complete the password reset, call {@link confirmPasswordReset} with the code supplied in
+* the email sent to the user, along with the new password specified by the user.
+*
+* @example
+* ```javascript
+* const actionCodeSettings = {
+*   url: 'https://www.example.com/?email=user@example.com',
+*   iOS: {
+*      bundleId: 'com.example.ios'
+*   },
+*   android: {
+*     packageName: 'com.example.android',
+*     installApp: true,
+*     minimumVersion: '12'
+*   },
+*   handleCodeInApp: true
+* };
+* await sendPasswordResetEmail(auth, 'user@example.com', actionCodeSettings);
+* // Obtain code from user.
+* await confirmPasswordReset('user@example.com', code);
+* ```
+*
+* @param auth - The {@link Auth} instance.
+* @param email - The user's email address.
+* @param actionCodeSettings - The {@link ActionCodeSettings}.
+*
+* @public
+*/
+async function sendPasswordResetEmail(auth, email, actionCodeSettings) {
+	const authInternal = _castAuth(auth);
+	const request = {
+		requestType: "PASSWORD_RESET",
+		email,
+		clientType: "CLIENT_TYPE_WEB"
+	};
+	if (actionCodeSettings) _setActionCodeSettingsOnRequest(authInternal, request, actionCodeSettings);
+	await handleRecaptchaFlow(authInternal, request, "getOobCode", sendPasswordResetEmail$1, "EMAIL_PASSWORD_PROVIDER");
 }
 /**
 * Creates a new user account associated with the specified email address and password.
@@ -4100,6 +4170,33 @@ async function updateEmailOrPassword(user, email, password) {
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+/**
+* Changes the type of persistence on the {@link Auth} instance for the currently saved
+* `Auth` session and applies this type of persistence for future sign-in requests, including
+* sign-in with redirect requests.
+*
+* @remarks
+* This makes it easy for a user signing in to specify whether their session should be
+* remembered or not. It also makes it easier to never persist the `Auth` state for applications
+* that are shared by other users or have sensitive data.
+*
+* This method does not work in a Node.js environment or with {@link Auth} instances created with a
+* {@link @firebase/app#FirebaseServerApp}.
+*
+* @example
+* ```javascript
+* setPersistence(auth, browserSessionPersistence);
+* ```
+*
+* @param auth - The {@link Auth} instance.
+* @param persistence - The {@link Persistence} to use.
+* @returns A `Promise` that resolves once the persistence change has completed
+*
+* @public
+*/
+function setPersistence(auth, persistence) {
+	return getModularInstance(auth).setPersistence(persistence);
+}
 /**
 * Adds an observer for changes to the user's sign-in state.
 *
@@ -4325,6 +4422,7 @@ function getAuth(app = getApp()) {
 }
 registerAuth("Node");
 _createError("operation-not-supported-in-this-environment");
+var browserSessionPersistence = inMemoryPersistence;
 AuthImpl.prototype.setPersistence = async () => {};
 /**
 * @license
@@ -4499,4 +4597,4 @@ function _isEmptyString(input) {
 	return typeof input === "undefined" || input?.length === 0;
 }
 //#endregion
-export { signOut as a, signInWithEmailAndPassword as i, getAuth as n, updatePassword as o, onAuthStateChanged as r, createUserWithEmailAndPassword as t };
+export { sendPasswordResetEmail as a, signOut as c, onAuthStateChanged as i, updatePassword as l, createUserWithEmailAndPassword as n, setPersistence as o, getAuth as r, signInWithEmailAndPassword as s, browserSessionPersistence as t };

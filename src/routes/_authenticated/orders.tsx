@@ -4,11 +4,9 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
 import {
   collection,
-  doc,
   onSnapshot,
   orderBy,
   query,
-  updateDoc,
   where,
   type Timestamp,
 } from "firebase/firestore";
@@ -28,7 +26,6 @@ import {
   TableBody, 
   TableCell 
 } from "@/components/ui/table";
-import { toast } from "sonner";
 import { 
   Search, 
   Filter, 
@@ -41,7 +38,6 @@ import {
   Smartphone,
   ChevronRight
 } from "lucide-react";
-import { notifyOrderStatusChange } from "@/lib/order-utils";
 import { 
   startOfDay, 
   subDays, 
@@ -49,7 +45,8 @@ import {
   endOfDay, 
   format,
   isAfter,
-  isBefore
+  isBefore,
+  isSameDay,
 } from "date-fns";
 import { formatCurrency, buildReceiptText } from "@/lib/pos";
 
@@ -60,7 +57,6 @@ type OrderItem = {
   quantity: number;
   taxRate?: number;
   discount?: number;
-  veg?: boolean;
   notes?: string | null;
   variant?: string | null;
   imageUrl?: string | null;
@@ -152,24 +148,12 @@ function OrdersPage() {
         setLoading(false);
       },
       (err) => {
-        console.error("[orders] snapshot failed", err);
+        if (import.meta.env.DEV) console.error("[orders] snapshot failed", err);
         setLoading(false);
       },
     );
     return () => unsub();
   }, [shop]);
-
-  // Handle Stage Advancement
-  const advanceOrder = async (id: string, nextStatus: string) => {
-    try {
-      const order = orders.find((entry) => entry.id === id);
-      await updateDoc(doc(getDb(), COL.orders, id), { status: nextStatus, updatedAt: new Date() });
-      await notifyOrderStatusChange({ id, orderId: order?.orderId, customerName: order?.customerName, customerMobile: order?.customerMobile }, nextStatus, shop?.id);
-      toast.success(`Order moved to ${nextStatus}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  };
 
   // Date range filters logic
   const dateLimits = useMemo(() => {
@@ -229,6 +213,36 @@ function OrdersPage() {
     return orders.find((o) => o.id === selectedOrderId) || null;
   }, [orders, selectedOrderId]);
 
+  const groupedHistory = useMemo(() => {
+    const groups = new Map<string, { label: string; orders: Order[] }>();
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+
+    filteredOrders.forEach((order) => {
+      if (!order.createdAt) return;
+      const createdAt = new Date(order.createdAt.toMillis());
+      const groupKey = format(startOfDay(createdAt), "yyyy-MM-dd");
+      const label = isSameDay(createdAt, today)
+        ? "Today"
+        : isSameDay(createdAt, yesterday)
+        ? "Yesterday"
+        : format(createdAt, "dd MMM yyyy");
+
+      const group = groups.get(groupKey) ?? { label, orders: [] };
+      group.orders.push(order);
+      groups.set(groupKey, group);
+    });
+
+    return Array.from(groups.values()).map((group) => ({
+      ...group,
+      orders: group.orders.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis() ?? 0;
+        const bTime = b.createdAt?.toMillis() ?? 0;
+        return bTime - aTime;
+      }),
+    }));
+  }, [filteredOrders]);
+
   // Receipt Printing Trigger
   const printReceipt = (o: Order) => {
     const sub = o.subtotal || o.total;
@@ -242,7 +256,6 @@ function OrdersPage() {
       taxRate: item.taxRate || 0,
       discount: item.discount || 0,
       preparationTime: 0,
-      veg: item.veg || true,
       notes: item.notes || null,
       variant: item.variant || null,
     }));
@@ -382,16 +395,9 @@ function OrdersPage() {
                               <span className="text-xs font-bold text-gray-800">
                                 {formatCurrency(o.total, shop.currency ?? "INR")}
                               </span>
-                              {col.next && (
-                                <Button 
-                                  size="sm" 
-                                  variant="default"
-                                  onClick={() => advanceOrder(o.id, col.next!)}
-                                  className="h-7 text-[10px] font-semibold px-2.5 rounded-lg"
-                                >
-                                  Mark {t("orders." + col.next)}
-                                </Button>
-                              )}
+                              <Badge variant="outline" className="text-[10px] font-semibold">
+                                {t("orders." + o.status) || o.status}
+                              </Badge>
                             </div>
                           </CardContent>
                         </Card>
@@ -487,32 +493,42 @@ function OrdersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOrders.map((o) => (
-                      <TableRow 
-                        key={o.id}
-                        onClick={() => setSelectedOrderId(o.id)}
-                        className={`cursor-pointer hover:bg-muted/40 transition select-none ${
-                          selectedOrderId === o.id ? "bg-muted/70 font-semibold" : ""
-                        }`}
-                      >
-                        <TableCell className="font-bold text-primary font-display text-xs">{o.orderId || o.id}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {o.createdAt ? format(new Date(o.createdAt.toMillis()), "dd MMM yyyy, hh:mm a") : "—"}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="truncate font-semibold max-w-[120px]">{o.customerName || "Walk-in"}</div>
-                          <div className="text-[10px] text-muted-foreground truncate">{o.customerMobile || "—"}</div>
-                        </TableCell>
-                        <TableCell className="text-xs capitalize font-medium">{o.paymentMethod}</TableCell>
-                        <TableCell className="text-xs font-bold text-right font-display">{formatCurrency(o.total, shop.currency ?? "INR")}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={`text-[9px] py-0 px-2 border font-bold capitalize shadow-none ${STATUS_COLORS[o.status] || "bg-gray-100"}`}>
-                            {o.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {!filteredOrders.length && (
+                    {groupedHistory.length ? (
+                      groupedHistory.map((group) => (
+                        <tbody key={group.label}>
+                          <TableRow className="bg-muted/20">
+                            <TableCell colSpan={6} className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 py-2">
+                              {group.label} — {group.orders.length} order{group.orders.length === 1 ? "" : "s"}
+                            </TableCell>
+                          </TableRow>
+                          {group.orders.map((o) => (
+                            <TableRow 
+                              key={o.id}
+                              onClick={() => setSelectedOrderId(o.id)}
+                              className={`cursor-pointer hover:bg-muted/40 transition select-none ${
+                                selectedOrderId === o.id ? "bg-muted/70 font-semibold" : ""
+                              }`}
+                            >
+                              <TableCell className="font-bold text-primary font-display text-xs">{o.orderId || o.id}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                {o.createdAt ? format(new Date(o.createdAt.toMillis()), "dd MMM yyyy, hh:mm a") : "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                <div className="truncate font-semibold max-w-[120px]">{o.customerName || "Walk-in"}</div>
+                                <div className="text-[10px] text-muted-foreground truncate">{o.customerMobile || "—"}</div>
+                              </TableCell>
+                              <TableCell className="text-xs capitalize font-medium">{o.paymentMethod}</TableCell>
+                              <TableCell className="text-xs font-bold text-right font-display">{formatCurrency(o.total, shop.currency ?? "INR")}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge className={`text-[9px] py-0 px-2 border font-bold capitalize shadow-none ${STATUS_COLORS[o.status] || "bg-gray-100"}`}>
+                                  {o.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      ))
+                    ) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-16 text-xs text-muted-foreground">
                           No history records found matching criteria.

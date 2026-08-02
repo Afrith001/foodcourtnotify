@@ -107,6 +107,12 @@
   --gradient-card: linear-gradient(180deg, #fffaf3 0%, #f3e4c8 100%);
   --shadow-soft: 0 18px 42px -22px rgba(74, 15, 15, 0.28), 0 2px 10px -2px rgba(74, 15, 15, 0.08);
   --shadow-elev: 0 18px 44px -20px rgba(74, 15, 15, 0.35);
+  --body-glow: rgba(182, 124, 47, 0.18);
+  --body-gradient-start: rgba(255, 250, 243, 0.96);
+  --body-gradient-end: rgba(248, 239, 228, 0.95);
+  --surface-strong: #fff3e4;
+  --surface-muted: #f5ebdc;
+  --surface-ink: #4a0f0f;
 }
 
 .dark {
@@ -154,6 +160,12 @@
   --gradient-card: linear-gradient(180deg, #23150d 0%, #160c08 100%);
   --shadow-soft: 0 18px 42px -22px rgba(0, 0, 0, 0.6);
   --shadow-elev: 0 18px 44px -20px rgba(0, 0, 0, 0.75);
+  --body-glow: rgba(227, 170, 91, 0.16);
+  --body-gradient-start: rgba(22, 12, 8, 0.98);
+  --body-gradient-end: rgba(35, 21, 13, 0.98);
+  --surface-strong: #2d1a10;
+  --surface-muted: #332014;
+  --surface-ink: #f8efe4;
 }
 
 @layer base {
@@ -167,7 +179,7 @@
   }
   body {
     background-color: var(--color-background);
-    background-image: radial-gradient(circle at top left, rgba(182, 124, 47, 0.18), transparent 28%), linear-gradient(135deg, rgba(255, 250, 243, 0.96), rgba(248, 239, 228, 0.95));
+    background-image: radial-gradient(circle at top left, var(--body-glow), transparent 28%), linear-gradient(135deg, var(--body-gradient-start), var(--body-gradient-end));
     color: var(--color-foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;

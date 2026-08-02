@@ -98,7 +98,6 @@ type ActiveOrder = {
     name: string;
     quantity: number;
     price: number;
-    veg?: boolean;
     preparationTime?: number;
   }>;
   total?: number;
@@ -587,7 +586,7 @@ function CustomerPortal() {
           setShop({ id: d.id, ...data });
         }
       } catch (error: unknown) {
-        console.error("[portal] load shop", error);
+        if (import.meta.env.DEV) console.error("[portal] load shop", error);
         if (!cancelled) {
           setPortalError(
             "We could not load this restaurant. Please check your connection and try again.",
@@ -610,7 +609,7 @@ function CustomerPortal() {
     const unsubs: (() => void)[] = [];
 
     const onListenerError = (error: unknown) => {
-      console.error("[portal] CMS listener failed", error);
+      if (import.meta.env.DEV) console.error("[portal] CMS listener failed", error);
       setPortalError("Some restaurant details could not be loaded. Please refresh and try again.");
     };
     unsubs.push(
@@ -702,7 +701,9 @@ function CustomerPortal() {
         });
         if (data.status === "ready") toast.success("Your order is ready for pickup!");
       },
-      (err) => console.error("[portal] snapshot failed", err),
+      (err) => {
+        if (import.meta.env.DEV) console.error("[portal] snapshot failed", err);
+      },
     );
     return () => unsub();
   }, [order?.id]);
@@ -792,7 +793,7 @@ function CustomerPortal() {
           createdAt: serverTimestamp(),
         });
       } catch (error: unknown) {
-        console.warn("[portal] notify failed", error);
+        if (import.meta.env.DEV) console.warn("[portal] notify failed", error);
       }
 
       setOrder({
@@ -807,7 +808,7 @@ function CustomerPortal() {
       });
       toast.success(`Tracking active for Order ${enteredOrderId}`);
     } catch (error: unknown) {
-      console.error("[portal] tracking failed", error);
+      if (import.meta.env.DEV) console.error("[portal] tracking failed", error);
       const message = "We could not look up that order right now. Please try again shortly.";
       setTrackingError(message);
       toast.error(message);
@@ -829,7 +830,7 @@ function CustomerPortal() {
   const estimatedMinutes = useMemo(() => {
     if (!order?.items?.length) return 15;
     const computed = order.items.reduce(
-      (sum, item) => sum + (item.veg ? 8 : 12) * (item.quantity || 1),
+      (sum, item) => sum + (item.preparationTime ?? 0) * (item.quantity || 1),
       0,
     );
     return Math.max(10, computed);

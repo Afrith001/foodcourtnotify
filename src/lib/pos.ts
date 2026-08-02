@@ -10,7 +10,6 @@ export interface CartItem {
   taxRate: number;
   discount: number;
   preparationTime: number;
-  veg: boolean;
   imageUrl?: string | null;
   notes?: string | null;
   variant?: string | null;

@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/TopBar";
@@ -19,9 +19,11 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const shopState = useShopState();
   const { shop, loading } = shopState;
+  const isKitchenDisplayRoute = location.pathname.startsWith("/kitchen");
 
   useEffect(() => {
     // Do not redirect until:
@@ -42,6 +44,39 @@ function AuthLayout() {
     }
   }, [user, shop, authLoading, loading, navigate]);
 
+  // Guard routes based on role: if a user navigates manually to an unauthorized path, redirect them
+  useEffect(() => {
+    if (!shop || !user) return;
+    const role = (shop.role || "owner").toLowerCase();
+    const path = location.pathname;
+    const isKitchenPath = path.startsWith("/kitchen");
+    const isBillingPath = path.startsWith("/billing");
+    const isAuthPath = path.startsWith("/auth");
+    const isComingSoon = path.startsWith("/coming-soon");
+
+    if (role === "kitchen") {
+      if (!isKitchenPath && !isAuthPath && !isComingSoon) {
+        navigate({ to: "/kitchen" });
+      }
+      return;
+    }
+
+    if (isKitchenPath) {
+      if (role === "cashier") {
+        navigate({ to: "/billing" });
+      } else {
+        navigate({ to: "/dashboard" });
+      }
+      return;
+    }
+
+    if (role === "cashier") {
+      if (!isBillingPath && !isAuthPath && !isComingSoon) {
+        navigate({ to: "/billing" });
+      }
+    }
+  }, [shop, user, location.pathname, navigate]);
+
   useEffect(() => {
     if (user && fcmConfigured) {
       requestNotificationPermissionAndSaveToken(user.uid);
@@ -58,13 +93,24 @@ function AuthLayout() {
 
   if (!shop) return null;
 
+  if (isKitchenDisplayRoute) {
+    return (
+      <ShopProvider value={shopState}>
+        <div className="min-h-screen bg-background text-foreground">
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </div>
+      </ShopProvider>
+    );
+  }
+
   return (
     <ShopProvider value={shopState}>
-      <div className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top_left,_rgba(182,124,47,0.16),_transparent_30%),_linear-gradient(135deg,_rgba(255,250,243,0.95),_rgba(248,239,228,0.94))]">
+      <div className="h-screen flex flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(182,124,47,0.16),_transparent_30%),_linear-gradient(135deg,_rgba(255,250,243,0.95),_rgba(248,239,228,0.94))]">
         <TopBar />
-        <div className="flex-1 flex min-w-0 overflow-hidden">
+        <div className="min-h-0 flex-1 flex min-w-0 overflow-hidden">
           <AppSidebar />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 pt-16 md:p-6">
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6">
             <Outlet />
           </main>
         </div>

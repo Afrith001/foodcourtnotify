@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import {
   collection,
   doc,
@@ -82,13 +83,19 @@ function SettingsPage() {
 
 function ShopProfile() {
   const { shop } = useShop();
-  const [f, setF] = useState({ name: "", address: "", phone: "", email: "" });
+  const [f, setF] = useState({ name: "", address: "", phone: "", email: "", dailyResetMode: "auto" as "auto" | "manual" });
   useEffect(() => {
     if (!shop) return;
     (async () => {
       const snap = await getDoc(doc(getDb(), COL.shops, shop.id));
-      const d = snap.data() as { name?: string; address?: string; phone?: string; email?: string } | undefined;
-      if (d) setF({ name: d.name ?? "", address: d.address ?? "", phone: d.phone ?? "", email: d.email ?? "" });
+      const d = snap.data() as { name?: string; address?: string; phone?: string; email?: string; dailyResetMode?: string } | undefined;
+      if (d) setF({
+        name: d.name ?? "",
+        address: d.address ?? "",
+        phone: d.phone ?? "",
+        email: d.email ?? "",
+        dailyResetMode: d.dailyResetMode === "manual" ? "manual" : "auto",
+      });
     })();
   }, [shop]);
   const save = async () => {
@@ -123,6 +130,46 @@ function ShopProfile() {
             <Label>Email</Label>
             <Input value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
           </div>
+        </div>
+        <div className="space-y-3 rounded-3xl border border-border bg-slate-50 p-4">
+          <p className="text-sm font-semibold">Daily Sales Reset</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={cn("rounded-2xl border p-4 text-sm font-semibold", f.dailyResetMode === "auto" ? "border-orange-500 bg-orange-50 text-orange-900" : "border-slate-200 bg-white text-slate-700")}>
+              <input
+                type="radio"
+                name="dailyResetMode"
+                checked={f.dailyResetMode === "auto"}
+                onChange={() => setF({ ...f, dailyResetMode: "auto" })}
+                className="mr-2"
+              />
+              Auto reset at 12:00 AM
+              <p className="mt-1 text-xs font-normal text-slate-500">Sales and order counters reset automatically at midnight.</p>
+            </label>
+            <label className={cn("rounded-2xl border p-4 text-sm font-semibold", f.dailyResetMode === "manual" ? "border-orange-500 bg-orange-50 text-orange-900" : "border-slate-200 bg-white text-slate-700")}>
+              <input
+                type="radio"
+                name="dailyResetMode"
+                checked={f.dailyResetMode === "manual"}
+                onChange={() => setF({ ...f, dailyResetMode: "manual" })}
+                className="mr-2"
+              />
+              Manual reset (End of Day)
+              <p className="mt-1 text-xs font-normal text-slate-500">Use the End of Day button to close the current day and start fresh.</p>
+            </label>
+          </div>
+          {f.dailyResetMode === "manual" && (
+            <Button type="button" variant="secondary" onClick={async () => {
+              if (!shop) return;
+              try {
+                await updateDoc(doc(getDb(), COL.shops, shop.id), { lastManualResetAt: new Date() });
+                toast.success("End of Day reset saved.");
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            }}>
+              End of Day
+            </Button>
+          )}
         </div>
         <Button onClick={save}>Save</Button>
       </CardContent>

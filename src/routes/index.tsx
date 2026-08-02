@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Nexavo POS — Smart Billing + Live Customer Order Tracking" },
-      { name: "description", content: "Modern POS for restaurants and food courts with billing, product management, inventory, kitchen workflow, QR tracking and real-time customer updates." },
+      { name: "description", content: "Modern POS for restaurants and food courts with billing, product management, kitchen workflow, QR tracking and real-time customer updates." },
       { property: "og:title", content: "Nexavo POS" },
       { property: "og:description", content: "Smart billing and live order tracking for modern food businesses." },
     ],
@@ -42,12 +42,20 @@ function Landing() {
             The complete POS platform for modern food businesses.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Run billing, manage products, track inventory, coordinate kitchen orders, send live customer updates and keep every transaction in Firebase. Set up in 60 seconds.
+            Run billing, manage products, coordinate kitchen orders, send live customer updates and keep every transaction in Firebase. Set up in 60 seconds.
           </p>
           <div className="mt-10 flex gap-3 justify-center">
             <Link to="/auth" search={{ mode: "signup" }}>
               <Button size="lg" className="shadow-elev">Launch Nexavo POS</Button>
             </Link>
+            <a
+              href="/downloads/nexavo-pos.apk"
+              download
+              className="inline-flex items-center justify-center gap-2 h-10 rounded-md px-8 text-sm font-semibold bg-primary text-primary-foreground shadow-elev transition-colors duration-75 hover:bg-primary/90 active:scale-95 active:opacity-90 will-change-transform"
+              aria-label="Download Nexavo POS APK"
+            >
+              Download Now
+            </a>
             <Link to="/auth"><Button size="lg" variant="outline">Sign in</Button></Link>
           </div>
           <div className="mt-4 text-xs text-muted-foreground">All your POS workflows stay connected in one Firebase-powered workspace.</div>
@@ -62,7 +70,7 @@ function Landing() {
           { i: BarChart3, t: "Sales insights", d: "Watch daily, weekly and monthly revenue from the built-in reports view." },
           { i: Users, t: "Customer CRM", d: "Capture orders, spending and loyalty data for returning diners." },
           { i: Ticket, t: "Flexible billing", d: "Support cash, UPI, card and split payments from one POS screen." },
-          { i: CheckCircle2, t: "Firebase-backed", d: "Products, orders, inventory and payments stay synchronized in Firestore." },
+          { i: CheckCircle2, t: "Firebase-backed", d: "Products, orders and payments stay synchronized in Firestore." },
         ].map((f) => (
           <div key={f.t} className="gradient-card border border-border rounded-2xl p-6 shadow-soft">
             <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4">

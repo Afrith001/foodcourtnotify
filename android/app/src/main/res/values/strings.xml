@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nexavo POS</string>
+    <string name="title_activity_main">Nexavo POS</string>
+    <string name="package_name">com.nexavo.pos</string>
+    <string name="custom_url_scheme">com.nexavo.pos</string>
+</resources>

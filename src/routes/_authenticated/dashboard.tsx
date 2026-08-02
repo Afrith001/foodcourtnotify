@@ -9,6 +9,9 @@ import {
   where,
   getDocs,
   getCountFromServer,
+  updateDoc,
+  doc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { getDb, COL } from "@/lib/firebase";
 import { useShop } from "@/hooks/useShop";
@@ -74,17 +77,26 @@ function Dashboard() {
     let todayUnsub: () => void = () => {};
     let isCancelled = false;
 
+    const resetStart = () => {
+      if (shop.dailyResetMode === "manual" && shop.lastManualResetAt) {
+        return shop.lastManualResetAt;
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    };
+
     (async () => {
       try {
         setLoadingStats(true);
-        // 1. Fetch total customers count from server
+        const startTime = resetStart();
+
         const customersCountSnap = await getCountFromServer(
           query(collection(db, COL.customers), where("shopId", "==", shop.id)),
         );
         if (isCancelled) return;
         const totalCustomers = customersCountSnap.data().count;
 
-        // 2. Fetch all orders once on mount to establish base stats
         const allOrdersSnap = await getDocs(
           query(collection(db, COL.orders), where("shopId", "==", shop.id)),
         );
@@ -92,41 +104,34 @@ function Dashboard() {
 
         const allOrdersList = allOrdersSnap.docs.map((d) => d.data());
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // Historical base (orders created before today, excluding Waiting)
         const histOrders = allOrdersList.filter((o) => {
           const t = o.createdAt?.toMillis?.() ?? 0;
-          return t < today.getTime() && o.status !== "Waiting";
+          return t < startTime.getTime() && o.status !== "Waiting";
         });
 
         const histOrdersCount = histOrders.length;
         const histRevenue = histOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+        const periodOrders = allOrdersList.filter((o) => {
+          const t = o.createdAt?.toMillis?.() ?? 0;
+          return t >= startTime.getTime() && o.status !== "Waiting";
+        });
 
-        // Set initial stats before loading subscriptions
         setStats({
           total: allOrdersList.filter((o) => o.status !== "Waiting").length,
-          today: allOrdersList.filter((o) => {
-            const t = o.createdAt?.toMillis?.() ?? 0;
-            return t >= today.getTime() && o.status !== "Waiting";
-          }).length,
+          today: periodOrders.length,
           pending: allOrdersList.filter((o) => o.status === "pending").length,
           preparing: allOrdersList.filter((o) => o.status === "preparing").length,
           ready: allOrdersList.filter((o) => o.status === "ready").length,
-          completed: allOrdersList.filter((o) => o.status === "completed").length,
+          completed: allOrdersList.filter((o) => o.status === "completed" && (o.createdAt?.toMillis?.() ?? 0) >= startTime.getTime()).length,
           customers: totalCustomers,
-          revenue: allOrdersList
-            .filter((o) => o.status !== "Waiting")
-            .reduce((sum, o) => sum + Number(o.total || 0), 0),
+          revenue: periodOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
         });
         setLoadingStats(false);
 
-        // 3. Set up lightweight subscriptions for today's and active orders
         const todayQ = query(
           collection(db, COL.orders),
           where("shopId", "==", shop.id),
-          where("createdAt", ">=", today),
+          where("createdAt", ">=", startTime),
         );
 
         const activeQ = query(
@@ -145,9 +150,10 @@ function Dashboard() {
 
           const orderRows = Array.from(merged.values());
 
-          const liveTodayOrders = orderRows.filter((r) => {
-            const t = r.createdAt?.toMillis?.() ?? 0;
-            return t >= today.getTime() && r.status !== "Waiting";
+const cutoff = startTime.getTime();
+        const liveTodayOrders = orderRows.filter((r) => {
+          const t = r.createdAt?.toMillis?.() ?? 0;
+          return t >= cutoff && r.status !== "Waiting";
           });
 
           const liveTodayOrdersCount = liveTodayOrders.length;
@@ -166,7 +172,7 @@ function Dashboard() {
             ready: orderRows.filter((r) => r.status === "ready").length,
             completed: orderRows.filter(
               (r) =>
-                r.status === "completed" && (r.createdAt?.toMillis?.() ?? 0) >= today.getTime(),
+                r.status === "completed" && (r.createdAt?.toMillis?.() ?? 0) >= cutoff,
             ).length,
           }));
         };
@@ -184,7 +190,7 @@ function Dashboard() {
             updateLiveStats();
           },
           (err) => {
-            console.error("todayQ listener error:", err);
+            if (import.meta.env.DEV) console.error("todayQ listener error:", err);
           },
         );
 
@@ -201,11 +207,11 @@ function Dashboard() {
             updateLiveStats();
           },
           (err) => {
-            console.error("activeQ listener error:", err);
+            if (import.meta.env.DEV) console.error("activeQ listener error:", err);
           },
         );
       } catch (err) {
-        console.error("Error loading dashboard statistics:", err);
+        if (import.meta.env.DEV) console.error("Error loading dashboard statistics:", err);
         if (!isCancelled) setLoadingStats(false);
       }
     })();
@@ -219,6 +225,7 @@ function Dashboard() {
 
   if (!shop) return null;
   const portalUrl = buildPortalUrl(shop.shopCode);
+  const isManualReset = shop.dailyResetMode === "manual";
 
   const copyUrl = async () => {
     await navigator.clipboard.writeText(portalUrl);
@@ -229,6 +236,18 @@ function Dashboard() {
     a.href = qr;
     a.download = `${shop.shopCode}-qr.png`;
     a.click();
+  };
+
+  const resetEndOfDay = async () => {
+    try {
+      await updateDoc(doc(getDb(), COL.shops, shop.id), {
+        lastManualResetAt: serverTimestamp(),
+      });
+      setStats((prev) => ({ ...prev, today: 0, revenue: 0, pending: 0, preparing: 0, ready: 0, completed: 0 }));
+      toast.success("End of day reset saved.");
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
   };
 
   const cards = [
@@ -368,13 +387,18 @@ function Dashboard() {
                 <div className="mt-4 rounded-3xl bg-white p-4 text-sm text-[#5F4A3B] break-all">
                   {portalUrl}
                 </div>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Button onClick={copyUrl} variant="outline" size="sm">
                     Copy
                   </Button>
                   <Button onClick={downloadQr} size="sm" disabled={!qr}>
                     Download
                   </Button>
+                  {isManualReset && (
+                    <Button onClick={resetEndOfDay} variant="secondary" size="sm">
+                      End of Day
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

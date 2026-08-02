@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
@@ -20,7 +19,8 @@ type StaffMember = { id: string; fullName?: string | null; email?: string | null
 function StaffPage() {
   const { shop } = useShop();
   const [members, setMembers] = useState<StaffMember[]>([]);
-  const [form, setForm] = useState({ fullName: "", email: "", role: "cashier" as string, active: true });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "kitchen" as string, active: true });
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shop) return;
@@ -33,20 +33,58 @@ function StaffPage() {
   const saveMember = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!shop) return;
+    setFormError(null);
+
+    const email = form.email.trim();
+    const password = form.password;
+
+    if (!email) {
+      setFormError("Email is required.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setFormError("Password must be at least 6 characters.");
+      return;
+    }
+
     try {
+      const apiKey = import.meta.env.VITE_FIREBASE_API_KEY as string;
+      if (!apiKey) {
+        throw new Error("Missing Firebase API key for staff creation.");
+      }
+
+      const resp = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, returnSecureToken: true }),
+        },
+      );
+
+      const body = await resp.json();
+      if (!resp.ok) {
+        const errorMessage = body?.error?.message || "Could not create staff account.";
+        throw new Error(errorMessage.replace(/_/g, " ").toLowerCase());
+      }
+
+      const uid = body.localId as string;
       const db = getDb();
-      await setDoc(doc(collection(db, COL.staff)), {
+      const staffRef = doc(collection(db, COL.staff));
+      await setDoc(staffRef, {
         shopId: shop.id,
+        userId: uid,
         fullName: form.fullName.trim(),
-        email: form.email.trim(),
+        email,
         role: form.role,
         active: form.active,
         createdAt: new Date(),
       });
-      toast.success("Staff member added");
-      setForm({ fullName: "", email: "", role: "cashier", active: true });
+
+      toast.success(`Kitchen account created — share these login details: ${email} + password`);
+      setForm({ fullName: "", email: "", password: "", role: "kitchen", active: true });
     } catch (error) {
-      toast.error((error as Error).message);
+      setFormError((error as Error).message);
     }
   };
 
@@ -65,7 +103,7 @@ function StaffPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-3xl font-bold">Staff</h1>
-        <p className="text-sm text-muted-foreground">Assign roles such as admin, manager, cashier, kitchen and waiter.</p>
+        <p className="text-sm text-muted-foreground">Assign roles for owner/admin, cashier, and kitchen access.</p>
       </div>
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card className="shadow-soft">
@@ -73,9 +111,11 @@ function StaffPage() {
           <CardContent>
             <form className="space-y-4" onSubmit={saveMember}>
               <div className="space-y-1.5"><Label>Full name</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required /></div>
-              <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label>Role</Label><Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="admin">Admin</SelectItem><SelectItem value="manager">Manager</SelectItem><SelectItem value="cashier">Cashier</SelectItem><SelectItem value="kitchen">Kitchen</SelectItem><SelectItem value="waiter">Waiter</SelectItem></SelectContent></Select></div>
+              <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+              <div className="space-y-1.5"><Label>Set temporary password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} /></div>
+              <div className="space-y-1.5"><Label>Role</Label><div className="rounded-md border border-border/70 bg-muted/40 px-3 py-2 text-sm">Kitchen</div></div>
               <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(checked) => setForm({ ...form, active: checked })} /><Label>Active</Label></div>
+              {formError ? <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div> : null}
               <Button type="submit">Save member</Button>
             </form>
           </CardContent>

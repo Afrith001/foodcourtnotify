@@ -4,6 +4,7 @@ import { z } from "zod";
 import i18n from "@/lib/i18n";
 import {
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   type AuthError,
@@ -20,7 +21,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getFirebaseAuth, getDb, COL, firebaseConfigured } from "@/lib/firebase";
+import { ensureSessionPersistence, getFirebaseAuth, getDb, COL, firebaseConfigured } from "@/lib/firebase";
 import { pickUniqueShopCode } from "@/lib/shop-code";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ import { ChefHat, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
-const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
+const searchSchema = z.object({ mode: z.enum(["signin", "signup", "kitchen"]).optional() });
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
@@ -47,13 +48,111 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+async function resolveSignedInRoute(
+  db: ReturnType<typeof getDb>,
+  uid: string,
+  email: string | null,
+  shopName: string,
+  mode: "signin" | "kitchen",
+) {
+  let staffSnap = await getDocs(
+    query(
+      collection(db, COL.staff),
+      where("userId", "==", uid),
+      where("active", "==", true),
+      limit(1),
+    ),
+  );
+
+  if (staffSnap.empty && email) {
+    try {
+      staffSnap = await getDocs(
+        query(
+          collection(db, COL.staff),
+          where("email", "==", email),
+          where("active", "==", true),
+          limit(1),
+        ),
+      );
+    } catch (error) {
+      if (import.meta.env.DEV) console.warn("[auth] Staff lookup by email failed", error);
+    }
+  }
+
+  if (!staffSnap.empty) {
+    const staffDoc = staffSnap.docs[0];
+    const staff = staffDoc.data() as { role?: string; shopId?: string };
+    const targetRole = (staff.role || "").toLowerCase();
+
+    if (staff.shopId) {
+      const shopDoc = await getDoc(doc(db, COL.shops, staff.shopId));
+      if (shopDoc.exists()) {
+        const selectedShop = ((shopDoc.data() as { name?: string }).name ?? "").trim().toLowerCase();
+        if (shopName.trim() && selectedShop && selectedShop !== shopName.trim().toLowerCase()) {
+          return { route: null, error: "This account does not belong to the selected shop." };
+        }
+      }
+    }
+
+    if (mode === "kitchen") {
+      if (targetRole !== "kitchen") {
+        return { route: null, error: "This account is not registered as kitchen staff." };
+      }
+      return { route: "/kitchen", error: null };
+    }
+
+    if (targetRole === "kitchen") {
+      return { route: null, error: "This account is for kitchen access. Please use Kitchen Login." };
+    }
+    if (targetRole === "cashier") return { route: "/billing", error: null };
+    return { route: "/dashboard", error: null };
+  }
+
+  let shopsSnap = await getDocs(
+    query(
+      collection(db, COL.shops),
+      where("ownerId", "==", uid),
+      limit(1),
+    ),
+  );
+
+  if (shopsSnap.empty && email) {
+    try {
+      shopsSnap = await getDocs(
+        query(
+          collection(db, COL.shops),
+          where("email", "==", email),
+          limit(1),
+        ),
+      );
+    } catch (error) {
+      if (import.meta.env.DEV) console.warn("[auth] Shop lookup by email failed", error);
+    }
+  }
+
+  if (!shopsSnap.empty) {
+    const shopDoc = shopsSnap.docs[0];
+    const shopNameValue = ((shopDoc.data() as { name?: string }).name ?? "").trim().toLowerCase();
+    if (shopName.trim() && shopNameValue && shopNameValue !== shopName.trim().toLowerCase()) {
+      return { route: null, error: "This account does not belong to the selected shop." };
+    }
+    if (mode === "kitchen") {
+      return { route: null, error: "This account is not registered as kitchen staff." };
+    }
+    return { route: "/dashboard", error: null };
+  }
+
+  return { route: null, error: "This account is not linked to any shop." };
+}
+
 function describeAuthError(err: unknown): string {
   const code = (err as AuthError)?.code ?? "";
   switch (code) {
     case "auth/invalid-credential":
     case "auth/wrong-password":
-    case "auth/user-not-found":
       return "Incorrect email or password.";
+    case "auth/user-not-found":
+      return "No account was found for that email address.";
     case "auth/invalid-email":
       return "That email address is invalid.";
     case "auth/email-already-in-use":
@@ -75,132 +174,83 @@ function describeAuthError(err: unknown): string {
 function AuthPage() {
   const { mode } = Route.useSearch();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"signin" | "signup">(mode ?? "signin");
+  const [tab, setTab] = useState<"signin" | "signup" | "kitchen">((mode ?? "signin") as "signin" | "signup" | "kitchen");
+
+  useEffect(() => {
+    if (mode && mode !== tab) {
+      setTab(mode as "signin" | "signup" | "kitchen");
+    }
+  }, [mode, tab]);
 
   useEffect(() => {
     if (!firebaseConfigured) return;
     const auth = getFirebaseAuth();
-    const db = getDb();
-    const unsub = auth.onAuthStateChanged(async (u) => {
-      if (u) {
-        try {
-          // Check if they belong to any shop by userId (highly likely to succeed without permission errors)
-          const staffSnap = await getDocs(
-            query(
-              collection(db, COL.staff),
-              where("userId", "==", u.uid),
-              where("active", "==", true),
-              limit(1),
-            ),
-          );
-          if (!staffSnap.empty) {
-            navigate({ to: "/dashboard" });
-            return;
-          }
-
-          // Try to query by email on staff (defensively)
-          if (u.email) {
-            try {
-              const staffEmailSnap = await getDocs(
-                query(
-                  collection(db, COL.staff),
-                  where("email", "==", u.email),
-                  where("active", "==", true),
-                  limit(1),
-                ),
-              );
-              if (!staffEmailSnap.empty) {
-                navigate({ to: "/dashboard" });
-                return;
-              }
-            } catch (e) {
-              console.warn("[AuthPage] Querying staff by email failed. If you need email-based auto-linking, update Firestore Security Rules.", e);
-            }
-          }
-
-          // Check if they own a shop by ownerId (highly likely to succeed)
-          let shopsSnap = await getDocs(
-            query(
-              collection(db, COL.shops),
-              where("ownerId", "==", u.uid),
-              limit(1),
-            ),
-          );
-          
-          if (shopsSnap.empty && u.email) {
-            // Try to query shops by email (defensively)
-            try {
-              shopsSnap = await getDocs(
-                query(
-                  collection(db, COL.shops),
-                  where("email", "==", u.email),
-                  limit(1),
-                ),
-              );
-            } catch (e) {
-              console.warn("[AuthPage] Querying shops by email failed. If you need email-based auto-linking, update Firestore Security Rules.", e);
-            }
-          }
-
-          if (!shopsSnap.empty) {
-            navigate({ to: "/dashboard" });
-          } else {
-            navigate({ to: "/auth", search: { mode: "signup" } });
-          }
-        } catch (err) {
-          console.error("[AuthPage] Error checking shop status on auth change:", err);
-          // Stay on signup page on error instead of dashboard to break blinking/redirect loops
-          navigate({ to: "/auth", search: { mode: "signup" } });
-        }
-      }
+    const unsub = auth.onAuthStateChanged(() => {
+      // Intentionally do not auto-redirect from /auth. Users must explicitly sign in.
     });
     return () => unsub();
-  }, [navigate]);
+  }, []);
 
   return (
-    <div className="min-h-screen flex bg-[linear-gradient(135deg,_rgba(255,250,243,0.98),_rgba(248,239,228,0.95))]">
-      <div className="hidden lg:flex flex-1 gradient-hero p-12 text-primary-foreground flex-col justify-between shadow-[inset_-4px_0_40px_rgba(0,0,0,0.16)]">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur flex items-center justify-center">
-            <ChefHat className="w-5 h-5" />
-          </div>
-          <span className="font-display font-bold text-lg">FoodCourtNotify</span>
-        </div>
-        <div>
-          <h2 className="font-display text-4xl font-bold leading-tight max-w-md">
-            One platform. Every shop. Zero confusion.
-          </h2>
-          <p className="mt-4 text-primary-foreground/80 max-w-md">
-            QR portals, real-time order alerts, customer CRM, coupons and campaigns — isolated per
-            shop on Firebase.
-          </p>
-        </div>
-        <div className="text-sm text-primary-foreground/70">© FoodCourtNotify</div>
-      </div>
-      <div className="flex-1 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_top_left,_rgba(182,124,47,0.16),_transparent_28%)]">
-        <div className="w-full max-w-md">
-          {!firebaseConfigured && (
-            <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              Firebase API key is missing. Add <code>VITE_FIREBASE_API_KEY</code> to your{" "}
-              <code>.env</code> file and reload.
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(182,124,47,0.16),_transparent_28%)] p-3 sm:p-4 lg:p-6">
+      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-7xl flex-col overflow-hidden rounded-[32px] border border-border/70 bg-card/70 shadow-soft backdrop-blur-xl lg:min-h-[calc(100vh-3rem)] lg:flex-row">
+        <div className="relative flex flex-1 flex-col justify-between overflow-hidden gradient-hero p-8 text-primary-foreground sm:p-10 lg:p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.16),_transparent_30%)]" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+              <ChefHat className="h-5 w-5" />
             </div>
-          )}
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
-            <TabsList className="grid grid-cols-2 w-full mb-6">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Create shop</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signin">
-              <SignInCard />
-            </TabsContent>
-            <TabsContent value="signup">
-              <SignUpCard onDone={() => setTab("signin")} />
-            </TabsContent>
-          </Tabs>
-          <div className="text-center mt-6 text-sm">
-            <Link to="/" className="text-muted-foreground hover:text-foreground">
-              ← Back home
-            </Link>
+            <div>
+              <p className="font-display text-lg font-semibold">FoodCourtNotify</p>
+              <p className="text-sm text-primary-foreground/75">A calmer way to run your kitchen</p>
+            </div>
+          </div>
+          <div className="relative max-w-lg">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-primary-foreground/70">Freshly brewed operations</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold leading-tight sm:text-4xl">
+              One porch light for orders, staff, and every shop story.
+            </h2>
+            <p className="mt-4 max-w-md text-base text-primary-foreground/80">
+              Welcome guests faster, keep the kitchen aligned, and give each shop a dedicated QR portal with real-time updates.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2 text-sm text-primary-foreground/80">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">QR portals</span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Kitchen alerts</span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Customer CRM</span>
+            </div>
+          </div>
+          <div className="relative text-sm text-primary-foreground/70">© FoodCourtNotify</div>
+        </div>
+        <div className="flex flex-1 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(182,124,47,0.16),_transparent_28%)] p-5 sm:p-8 lg:p-10">
+          <div className="w-full max-w-md">
+            {!firebaseConfigured && (
+              <div className="mb-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                Firebase API key is missing. Add <code>VITE_FIREBASE_API_KEY</code> to your{" "}
+                <code>.env</code> file and reload.
+              </div>
+            )}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup" | "kitchen")}>
+              <TabsList className="mb-6 grid w-full grid-cols-3">
+                <TabsTrigger value="signin">Sign in</TabsTrigger>
+                <TabsTrigger value="kitchen">Kitchen Login</TabsTrigger>
+                <TabsTrigger value="signup">Create shop</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin">
+                <SignInCard />
+              </TabsContent>
+              <TabsContent value="kitchen">
+                <KitchenSignInCard />
+              </TabsContent>
+              <TabsContent value="signup">
+                <SignUpCard onDone={() => setTab("signin")} />
+              </TabsContent>
+            </Tabs>
+            <div className="mt-6 text-center text-sm">
+              <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
+                <span aria-hidden="true">←</span>
+                Back home
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -214,164 +264,99 @@ function SignInCard() {
   const [shopName, setShopName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shopName.trim()) {
+      setAuthError("Please enter your shop name.");
       toast.error("Please enter your shop name.");
       return;
     }
     if (!email.trim() || !password) {
+      setAuthError("Email and password are required.");
       toast.error("Email and password are required.");
       return;
     }
+
     setBusy(true);
+    setAuthError(null);
+    let cancelled = false;
+
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return;
+      cancelled = true;
+      setBusy(false);
+      setAuthError("Login is taking too long. Please check your connection and try again.");
+      toast.error("Login timed out. Please try again.");
+    }, 12000);
+
     try {
-      const auth = getFirebaseAuth();
+      const auth = await ensureSessionPersistence();
       const db = getDb();
       const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      if (cancelled) return;
 
-      // Verify the user belongs to a shop matching `shopName`
-      let staffSnap = await getDocs(
-        query(
-          collection(db, COL.staff),
-          where("userId", "==", cred.user.uid),
-          where("active", "==", true),
-        ),
-      );
+      const target = await resolveSignedInRoute(db, cred.user.uid, cred.user.email, shopName, "signin");
+      if (cancelled) return;
 
-      // Fallback: Check if there is an active staff record matching user's email
-      if (staffSnap.empty && cred.user.email) {
-        try {
-          const staffEmailSnap = await getDocs(
-            query(
-              collection(db, COL.staff),
-              where("email", "==", cred.user.email),
-              where("active", "==", true),
-            ),
-          );
-          if (!staffEmailSnap.empty) {
-            for (const docSnap of staffEmailSnap.docs) {
-              await updateDoc(docSnap.ref, { userId: cred.user.uid });
-            }
-            // Re-query staff by userId
-            staffSnap = await getDocs(
-              query(
-                collection(db, COL.staff),
-                where("userId", "==", cred.user.uid),
-                where("active", "==", true),
-              ),
-            );
-          }
-        } catch (e) {
-          console.warn("[SignInCard] Fallback staff query/update by email failed due to permissions.", e);
-        }
-      }
-
-      if (staffSnap.empty) {
-        // Attempt legacy owner recovery by checking if there's a shop with ownerId === cred.user.uid
-        let shopsSnap = await getDocs(
-          query(
-            collection(db, COL.shops),
-            where("ownerId", "==", cred.user.uid),
-            limit(1),
-          ),
-        );
-        if (shopsSnap.empty && cred.user.email) {
-          // Fallback check by email
-          try {
-            shopsSnap = await getDocs(
-              query(
-                collection(db, COL.shops),
-                where("email", "==", cred.user.email),
-                limit(1),
-              ),
-            );
-          } catch (e) {
-            console.warn("[SignInCard] Fallback shops query by email failed due to permissions.", e);
-          }
-        }
-
-        if (!shopsSnap.empty) {
-          const shopDoc = shopsSnap.docs[0];
-          const shopId = shopDoc.id;
-
-          try {
-            // If the shop does not have the current user's UID as ownerId, update it
-            if (shopDoc.data().ownerId !== cred.user.uid) {
-              await updateDoc(doc(db, COL.shops, shopId), { ownerId: cred.user.uid });
-            }
-          } catch (e) {
-            console.warn("[SignInCard] Fallback shop updateDoc ownerId failed due to permissions.", e);
-          }
-
-          // Fetch user info for fullName & email
-          const userDoc = await getDoc(doc(db, COL.users, cred.user.uid));
-          const userData = userDoc.exists() ? userDoc.data() : null;
-          const fullName = userData?.fullName || cred.user.displayName || "Owner";
-          const emailVal = userData?.email || cred.user.email || "";
-
-          // Create the missing owner staff record
-          await setDoc(doc(collection(db, COL.staff)), {
-            shopId,
-            userId: cred.user.uid,
-            role: "owner",
-            fullName,
-            email: emailVal,
-            active: true,
-            createdAt: serverTimestamp(),
-          });
-
-          // Re-query staff
-          staffSnap = await getDocs(
-            query(
-              collection(db, COL.staff),
-              where("userId", "==", cred.user.uid),
-              where("active", "==", true),
-            ),
-          );
-        }
-      }
-
-      if (staffSnap.empty) {
+      if (target.error) {
         await signOut(auth);
-        toast.error("This account is not linked to any shop.");
+        setAuthError(target.error);
+        toast.error(target.error);
         return;
       }
-      const shopIds = staffSnap.docs.map((d) => (d.data() as { shopId: string }).shopId);
-      const target = shopName.trim().toLowerCase();
-      let matched = false;
-      for (const sid of shopIds) {
-        const sd = await getDoc(doc(db, COL.shops, sid));
-        if (sd.exists() && ((sd.data() as { name: string }).name ?? "").toLowerCase().trim() === target) {
-          matched = true;
-          break;
-        }
+
+      if (target.route) {
+        const successMessage = target.route === "/kitchen" ? "Welcome to Kitchen" : target.route === "/billing" ? "Welcome to Billing" : "Welcome back!";
+        toast.success(successMessage);
+        navigate({ to: target.route as any });
       }
-      if (!matched) {
-        // check if shop exists at all
-        const existsSnap = await getDocs(
-          query(collection(db, COL.shops), where("name", "==", shopName.trim()), limit(1)),
-        );
-        await signOut(auth);
-        toast.error(existsSnap.empty ? "Shop not found." : "This account does not belong to the selected shop.");
-        return;
+    } catch (err) {
+      if (!cancelled) {
+        const message = describeAuthError(err);
+        setAuthError(message);
+        toast.error(message);
       }
-      toast.success("Welcome back!");
-      navigate({ to: "/dashboard" });
+    } finally {
+      if (!cancelled) {
+        window.clearTimeout(timeoutId);
+        setBusy(false);
+      }
+    }
+  };
+
+  const sendReset = async () => {
+    if (!forgotEmail.trim()) {
+      toast.error("Please enter your email.");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const auth = getFirebaseAuth();
+      await sendPasswordResetEmail(auth, forgotEmail.trim());
+      toast.success("Password reset link sent to your email — check your inbox");
+      setForgotMode(false);
+      setForgotEmail("");
     } catch (err) {
       toast.error(describeAuthError(err));
     } finally {
-      setBusy(false);
+      setForgotBusy(false);
     }
   };
 
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle className="font-display">Welcome back</CardTitle>
-        <CardDescription>Sign in to your shop dashboard.</CardDescription>
+    <Card className="border-border/70 bg-background/95 shadow-soft">
+      <CardHeader className="space-y-2">
+        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+          Morning service
+        </div>
+        <CardTitle className="font-display text-2xl">Welcome back</CardTitle>
+        <CardDescription>Shop owner or staff member? Sign in below with your email.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={submit}>
@@ -392,9 +377,104 @@ function SignInCard() {
             <Label htmlFor="si-pass">Password</Label>
             <Input id="si-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
+          {authError ? <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{authError}</div> : null}
+          <div className="flex items-center justify-between">
+            <div />
+            <button type="button" className="text-sm font-medium text-primary underline-offset-4 transition-colors hover:text-primary/90 hover:underline" onClick={() => { setForgotMode((s) => !s); setForgotEmail(email); }}>
+              Forgot password?
+            </button>
+          </div>
+
+          {forgotMode && (
+            <div className="space-y-2 rounded-2xl border border-border/70 bg-muted/40 p-3">
+              <div className="space-y-1.5">
+                <Label>Email for reset</Label>
+                <Input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={sendReset} disabled={forgotBusy}>{forgotBusy ? "Sending..." : "Send reset link"}</Button>
+                <Button variant="outline" onClick={() => setForgotMode(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sign in
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function KitchenSignInCard() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setError("Email and password are required.");
+      toast.error("Email and password are required.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+
+    try {
+      const auth = await ensureSessionPersistence();
+      const db = getDb();
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const user = cred.user;
+
+      const target = await resolveSignedInRoute(db, user.uid, user.email, "", "kitchen");
+
+      if (target.error) {
+        await signOut(auth);
+        setError(target.error);
+        toast.error(target.error);
+        return;
+      }
+
+      if (target.route) {
+        toast.success("Welcome to Kitchen");
+        navigate({ to: target.route as any });
+      }
+    } catch (err) {
+      const message = describeAuthError(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-border/70 bg-background/95 shadow-soft">
+      <CardHeader className="space-y-2">
+        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+          Kitchen staff
+        </div>
+        <CardTitle className="font-display text-2xl">Kitchen Login</CardTitle>
+        <CardDescription>Enter your kitchen account credentials to access the full-screen kitchen display.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4" onSubmit={submit}>
+          <div className="space-y-1.5">
+            <Label htmlFor="ki-email">Email</Label>
+            <Input id="ki-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ki-pass">Password</Label>
+            <Input id="ki-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+          {error ? <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div> : null}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Kitchen Login
           </Button>
         </form>
       </CardContent>
@@ -447,6 +527,7 @@ function SignUpCard({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const db = getDb();
+      const auth = await ensureSessionPersistence();
       let uid = "";
       let email = "";
 
@@ -539,14 +620,17 @@ function SignUpCard({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle className="font-display">Open your shop</CardTitle>
+    <Card className="border-border/70 bg-background/95 shadow-soft">
+      <CardHeader className="space-y-2">
+        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+          New shop setup
+        </div>
+        <CardTitle className="font-display text-2xl">Open your shop</CardTitle>
         <CardDescription>Get your QR portal and dashboard in seconds.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-3" onSubmit={submit}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Shop name *</Label>
               <Input value={form.shopName} onChange={set("shopName")} required />
@@ -557,7 +641,7 @@ function SignUpCard({ onDone }: { onDone: () => void }) {
             </div>
           </div>
           {currentUser ? (
-            <div className="space-y-1.5 bg-muted/40 p-3 rounded-md border border-border">
+            <div className="space-y-1.5 rounded-2xl border border-border/70 bg-muted/40 p-3">
               <Label className="text-muted-foreground">Linked Account</Label>
               <div className="text-sm font-medium">{currentUser.email}</div>
             </div>
@@ -579,7 +663,7 @@ function SignUpCard({ onDone }: { onDone: () => void }) {
               </div>
             </>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Mobile</Label>
               <Input value={form.mobile} onChange={set("mobile")} />
@@ -590,7 +674,7 @@ function SignUpCard({ onDone }: { onDone: () => void }) {
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create shop
           </Button>
         </form>

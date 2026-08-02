@@ -14,7 +14,7 @@
  *   VITE_FIREBASE_VAPID_KEY (for FCM)
  */
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import { browserSessionPersistence, getAuth, setPersistence, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -34,6 +34,7 @@ export const firebaseConfigured = Boolean(
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _authPersistenceConfigured = false;
 
 export function getFirebaseApp(): FirebaseApp {
   if (!_app) {
@@ -42,8 +43,27 @@ export function getFirebaseApp(): FirebaseApp {
   return _app;
 }
 
+export async function ensureSessionPersistence(auth?: Auth): Promise<Auth> {
+  const targetAuth = auth ?? getFirebaseAuth();
+  if (_authPersistenceConfigured || typeof window === "undefined" || !firebaseConfigured) {
+    return targetAuth;
+  }
+
+  try {
+    await setPersistence(targetAuth, browserSessionPersistence);
+    _authPersistenceConfigured = true;
+  } catch (error) {
+    console.warn("[firebase] Could not configure session-based auth persistence:", error);
+  }
+
+  return targetAuth;
+}
+
 export function getFirebaseAuth(): Auth {
   if (!_auth) _auth = getAuth(getFirebaseApp());
+  if (!_authPersistenceConfigured && typeof window !== "undefined" && firebaseConfigured) {
+    void ensureSessionPersistence(_auth);
+  }
   return _auth;
 }
 
@@ -61,7 +81,6 @@ export const COL = {
   customers: "customers",
   products: "products",
   categories: "categories",
-  inventoryMovements: "inventoryMovements",
   businessProfiles: "businessProfiles",
   coupons: "coupons",
   campaigns: "campaigns",

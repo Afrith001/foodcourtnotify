@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
@@ -65,8 +65,6 @@ import {
   Check,
   Pin,
   MessageSquare,
-  HelpCircle,
-  Megaphone,
   Calendar,
   Wifi,
   Car,
@@ -195,16 +193,22 @@ function Skeleton({ className = "" }: { className?: string }) {
 function RestaurantCMSPage() {
   const { t } = useTranslation();
   const { shop } = useShop();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("branding");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { document.title = `Restaurant CMS · ${t("common.appName")}`; }, [t]);
+
   useEffect(() => {
     if (!shop) return;
-    const hash = window.location.hash.replace("#", "");
-    if (["branding","details","gallery","contact","theme","announcements","reviews","faq"].includes(hash)) setActiveTab(hash);
+    const hash = (location.hash || "").replace("#", "");
+    if (["branding","details","gallery","contact","theme"].includes(hash)) {
+      setActiveTab(hash);
+    } else {
+      setActiveTab("branding");
+    }
     setLoading(false);
-  }, [shop]);
+  }, [shop, location.hash]);
 
   if (loading) return <div className="space-y-4 max-w-6xl"><Skeleton className="h-10 w-64"/><Skeleton className="h-10 w-full"/><Skeleton className="h-96 w-full"/></div>;
   if (!shop) return null;
@@ -215,9 +219,6 @@ function RestaurantCMSPage() {
     { value:"gallery", label:"Gallery", icon:ImageIcon },
     { value:"contact", label:"Contact", icon:Phone },
     { value:"theme", label:"Theme", icon:Palette },
-    { value:"announcements", label:"Announcements", icon:Megaphone },
-    { value:"reviews", label:"Reviews", icon:Star },
-    { value:"faq", label:"FAQ", icon:HelpCircle },
   ];
 
   return (
@@ -239,9 +240,6 @@ function RestaurantCMSPage() {
         <TabsContent value="gallery"><GallerySection shopId={shop.id}/></TabsContent>
         <TabsContent value="contact"><ContactSection shopId={shop.id}/></TabsContent>
         <TabsContent value="theme"><ThemeSection shopId={shop.id}/></TabsContent>
-        <TabsContent value="announcements"><AnnouncementsSection shopId={shop.id}/></TabsContent>
-        <TabsContent value="reviews"><ReviewsSection shopId={shop.id}/></TabsContent>
-        <TabsContent value="faq"><FAQSection shopId={shop.id}/></TabsContent>
       </Tabs>
     </div>
   );
@@ -609,250 +607,3 @@ function ThemeSection({ shopId }: { shopId: string }) {
   );
 }
 
-// ─── SECTION 6: ANNOUNCEMENTS ────────────────────────────────────────
-function AnnouncementsSection({ shopId }: { shopId: string }) {
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [editing, setEditing] = useState<any|null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    const unsub = onSnapshot(query(collection(getDb(), COL.announcements), where("shopId","==",shopId), orderBy("createdAt","desc")), (snap) => { setAnnouncements(snap.docs.map((d) => ({ id:d.id, ...d.data() }))); setLoaded(true); });
-    return () => unsub();
-  }, [shopId]);
-  const deleteItem = async (id:string) => { await deleteDoc(doc(getDb(), COL.announcements, id)); toast.success("Deleted"); };
-  const toggleStatus = async (item:any) => { await updateDoc(doc(getDb(), COL.announcements, item.id), { active:!item.active }); };
-  if (!loaded) return <Skeleton className="h-96 w-full"/>;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Announcements</h2><Button onClick={() => { setEditing(null); setShowForm(true); }} className="bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4 mr-2"/>New Announcement</Button></div>
-      {showForm && <AnnouncementForm shopId={shopId} edit={editing} onClose={() => { setShowForm(false); setEditing(null); }} onSaved={() => { setShowForm(false); setEditing(null); }}/>}
-      <div className="space-y-3">
-        {announcements.length === 0 && <Card className="shadow-soft"><CardContent className="py-12 text-center text-slate-400"><Megaphone className="w-12 h-12 mx-auto mb-2 opacity-50"/><p>No announcements yet.</p></CardContent></Card>}
-        {announcements.map((item) => (
-          <Card key={item.id} className={`shadow-soft ${item.active ? "" : "opacity-60"}`}>
-            <CardContent className="py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-sm">{item.title}</h3>
-                    {item.pinned && <Pin className="w-3 h-3 text-orange-500"/>}
-                    <Badge className={item.active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}>{item.active ? "Active" : "Inactive"}</Badge>
-                    {item.priority === "high" && <Badge className="bg-red-100 text-red-700">High</Badge>}
-                  </div>
-                  <p className="text-sm text-slate-600 line-clamp-2">{item.message}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/>{item.startDate || "No date"}</span>
-                    <span className="flex items-center gap-1"><Monitor className="w-3 h-3"/>{item.display || "Both"}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)}>{item.active ? <ToggleRight className="w-4 h-4 text-green-600"/> : <ToggleLeft className="w-4 h-4 text-slate-400"/>}</Button>
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing(item); setShowForm(true); }}><Edit3 className="w-4 h-4"/></Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}><Trash2 className="w-4 h-4 text-red-500"/></Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AnnouncementForm({ shopId, edit, onClose, onSaved }: { shopId:string; edit:any|null; onClose:()=>void; onSaved:()=>void }) {
-  const [form, setForm] = useState<any>({ title:edit?.title||"", message:edit?.message||"", bannerImage:edit?.bannerImage||"", priority:edit?.priority||"normal", startDate:edit?.startDate||"", endDate:edit?.endDate||"", buttonText:edit?.buttonText||"", buttonUrl:edit?.buttonUrl||"", backgroundColor:edit?.backgroundColor||"#F97316", active:edit?.active??true, pinned:edit?.pinned??false, display:edit?.display||"both" });
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const update = (k:string, v:any) => setForm((p:any) => ({ ...p, [k]:v }));
-  const save = async () => {
-    setSaving(true);
-    try { const p = { ...form, shopId, updatedAt:serverTimestamp() }; if (edit?.id) { await updateDoc(doc(getDb(), COL.announcements, edit.id), p); toast.success("Updated"); } else { await addDoc(collection(getDb(), COL.announcements), { ...p, createdAt:serverTimestamp() }); toast.success("Created"); } onSaved(); }
-    catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
-  };
-  return (
-    <Card className="shadow-soft border-orange-100">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-center justify-between"><h3 className="font-semibold">{edit ? "Edit" : "New"} Announcement</h3><Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4"/></Button></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5"><Label>Title</Label><Input value={form.title} onChange={(e) => update("title",e.target.value)} placeholder="Announcement title"/></div>
-          <div className="space-y-1.5"><Label>Priority</Label><select value={form.priority} onChange={(e) => update("priority",e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option></select></div>
-        </div>
-        <div className="space-y-1.5"><Label>Message</Label><Textarea value={form.message} onChange={(e) => update("message",e.target.value)} rows={3} placeholder="Announcement message..."/></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.startDate} onChange={(e) => update("startDate",e.target.value)}/></div>
-          <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.endDate} onChange={(e) => update("endDate",e.target.value)}/></div>
-          <div className="space-y-1.5"><Label>Button Text</Label><Input value={form.buttonText} onChange={(e) => update("buttonText",e.target.value)} placeholder="Learn More"/></div>
-          <div className="space-y-1.5"><Label>Button URL</Label><Input value={form.buttonUrl} onChange={(e) => update("buttonUrl",e.target.value)} placeholder="https://..."/></div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <ColorField label="Background Color" value={form.backgroundColor} onChange={(v) => update("backgroundColor",v)}/>
-          <div className="space-y-1.5"><Label>Display On</Label><select value={form.display} onChange={(e) => update("display",e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="both">Both</option><option value="home">Home</option><option value="portal">Portal</option></select></div>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Banner Image</Label>
-          {form.bannerImage ? (
-            <div className="relative w-full h-32 rounded-xl overflow-hidden border group">
-              <img src={form.bannerImage} alt="" className="w-full h-full object-cover"/>
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <button onClick={() => update("bannerImage","")} className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center"><Trash2 className="w-3.5 h-3.5 text-white"/></button>
-              </div>
-            </div>
-          ) : <DropZone onFiles={async (f) => { setUploading(true); try { const url = await uploadToCloudinary(f[0]); update("bannerImage",url); } catch (e:any) { toast.error(e.message); } setUploading(false); }} label="Upload banner"/>}
-          {uploading && <div className="text-sm text-orange-600">Uploading...</div>}
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(v) => update("active",v)}/><Label className="text-sm">Active</Label></div>
-          <div className="flex items-center gap-2"><Switch checked={form.pinned} onCheckedChange={(v) => update("pinned",v)}/><Label className="text-sm">Pinned</Label></div>
-        </div>
-        <Button onClick={save} disabled={saving} className="bg-orange-500 hover:bg-orange-600">{saving ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Save className="w-4 h-4 mr-2"/>}{edit ? "Update" : "Create"} Announcement</Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── SECTION 7: REVIEWS ──────────────────────────────────────────────
-function ReviewsSection({ shopId }: { shopId: string }) {
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [filter, setFilter] = useState("pending");
-  const [loaded, setLoaded] = useState(false);
-  const [replyText, setReplyText] = useState<Record<string,string>>({});
-  useEffect(() => {
-    const unsub = onSnapshot(query(collection(getDb(), COL.reviews), where("shopId","==",shopId), orderBy("createdAt","desc")), (snap) => { setReviews(snap.docs.map((d) => ({ id:d.id, ...d.data() }))); setLoaded(true); });
-    return () => unsub();
-  }, [shopId]);
-  const updateStatus = async (id:string, status:string) => { await updateDoc(doc(getDb(), COL.reviews, id), { status, updatedAt:serverTimestamp() }); toast.success(`Review ${status}`); };
-  const submitReply = async (id:string) => { const text = replyText[id]?.trim(); if (!text) return; await updateDoc(doc(getDb(), COL.reviews, id), { reply:text, repliedAt:serverTimestamp() }); setReplyText((p) => ({ ...p, [id]:"" })); toast.success("Reply posted"); };
-  const deleteReview = async (id:string) => { await deleteDoc(doc(getDb(), COL.reviews, id)); toast.success("Deleted"); };
-  const togglePin = async (item:any) => { await updateDoc(doc(getDb(), COL.reviews, item.id), { pinned:!item.pinned }); };
-  if (!loaded) return <Skeleton className="h-96 w-full"/>;
-
-  const filtered = reviews.filter((r) => filter === "all" || r.status === filter);
-  const avg = reviews.length ? (reviews.reduce((s,r) => s + (r.rating||0), 0) / reviews.length).toFixed(1) : "0.0";
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Reviews</h2>
-        <div className="flex items-center gap-3 text-sm"><span className="text-slate-500">Avg:</span><span className="font-bold flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500"/>{avg}</span><span className="text-slate-400">({reviews.length})</span></div>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        {["pending","approved","rejected","all"].map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-4 py-1.5 rounded-xl text-xs font-medium transition-all ${filter === f ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-            {f.charAt(0).toUpperCase()+f.slice(1)} {f !== "all" && <span className="ml-1 opacity-70">({reviews.filter((r) => r.status === f).length})</span>}
-          </button>
-        ))}
-      </div>
-      <div className="space-y-3">
-        {filtered.length === 0 && <Card className="shadow-soft"><CardContent className="py-12 text-center text-slate-400"><MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50"/><p>No reviews found.</p></CardContent></Card>}
-        {filtered.map((item) => (
-          <Card key={item.id} className={`shadow-soft ${item.pinned ? "border-orange-200 ring-1 ring-orange-100" : ""}`}>
-            <CardContent className="py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-sm">{item.name || "Anonymous"}</h3>
-                    <div className="flex items-center gap-0.5">{Array.from({length:5}).map((_,i) => <Star key={i} className={`w-3 h-3 ${i < (item.rating||0) ? "text-yellow-500 fill-yellow-500" : "text-slate-200"}`}/>)}</div>
-                    {item.pinned && <Pin className="w-3 h-3 text-orange-500"/>}
-                    <Badge className={item.status === "approved" ? "bg-green-100 text-green-700" : item.status === "rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}>{item.status}</Badge>
-                  </div>
-                  <p className="text-sm text-slate-600">{item.review}</p>
-                  {item.photo && <img src={item.photo} alt="" className="w-16 h-16 rounded-xl object-cover mt-2 border"/>}
-                  {item.reply && <div className="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-100"><p className="text-xs font-semibold text-slate-500 mb-1">Your Reply:</p><p className="text-sm text-slate-700">{item.reply}</p></div>}
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input value={replyText[item.id]||""} onChange={(e) => setReplyText((p) => ({ ...p, [item.id]:e.target.value }))} placeholder="Write a reply..." className="h-8 text-xs rounded-lg"/>
-                    <Button size="sm" variant="outline" onClick={() => submitReply(item.id)} className="h-8 text-xs"><Reply className="w-3 h-3 mr-1"/>Reply</Button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {item.status === "pending" && (<><Button variant="ghost" size="sm" onClick={() => updateStatus(item.id,"approved")}><Check className="w-4 h-4 text-green-600"/></Button><Button variant="ghost" size="sm" onClick={() => updateStatus(item.id,"rejected")}><X className="w-4 h-4 text-red-500"/></Button></>)}
-                  <Button variant="ghost" size="sm" onClick={() => togglePin(item)}><Pin className={`w-4 h-4 ${item.pinned ? "text-orange-500" : "text-slate-400"}`}/></Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteReview(item.id)}><Trash2 className="w-4 h-4 text-red-500"/></Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── SECTION 8: FAQ ─────────────────────────────────────────────────
-function FAQSection({ shopId }: { shopId: string }) {
-  const [faqs, setFaqs] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<any|null>(null);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    const unsub = onSnapshot(query(collection(getDb(), COL.faqs), where("shopId","==",shopId), orderBy("displayOrder","asc")), (snap) => { setFaqs(snap.docs.map((d) => ({ id:d.id, ...d.data() }))); setLoaded(true); });
-    return () => unsub();
-  }, [shopId]);
-  const deleteFaq = async (id:string) => { await deleteDoc(doc(getDb(), COL.faqs, id)); toast.success("Deleted"); };
-  const moveItem = async (index:number, dir:"up"|"down") => {
-    const items = [...faqs]; const target = dir === "up" ? index-1 : index+1;
-    if (target < 0 || target >= items.length) return;
-    [items[index], items[target]] = [items[target], items[index]];
-    for (let i = 0; i < items.length; i++) await updateDoc(doc(getDb(), COL.faqs, items[i].id), { displayOrder:i });
-    setFaqs(items);
-  };
-  if (!loaded) return <Skeleton className="h-96 w-full"/>;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between"><h2 className="text-xl font-bold">FAQ</h2><Button onClick={() => { setEditing(null); setShowForm(true); }} className="bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4 mr-2"/>Add FAQ</Button></div>
-      {showForm && <FAQForm shopId={shopId} edit={editing} onClose={() => { setShowForm(false); setEditing(null); }} onSaved={() => { setShowForm(false); setEditing(null); }} nextOrder={faqs.length}/>}
-      <div className="space-y-2">
-        {faqs.length === 0 && <Card className="shadow-soft"><CardContent className="py-12 text-center text-slate-400"><HelpCircle className="w-12 h-12 mx-auto mb-2 opacity-50"/><p>No FAQs yet.</p></CardContent></Card>}
-        {faqs.map((item, idx) => (
-          <Card key={item.id} className={`shadow-soft ${!item.active ? "opacity-60" : ""}`}>
-            <CardContent className="py-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-mono">#{idx+1}</span>
-                    <h3 className="font-medium text-sm">{item.question}</h3>
-                    {item.category && <Badge variant="outline" className="text-[10px]">{item.category}</Badge>}
-                    {!item.active && <Badge className="bg-slate-100 text-slate-500 text-[10px]">Hidden</Badge>}
-                  </div>
-                  <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.answer}</p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => moveItem(idx,"up")} disabled={idx === 0}><ChefHat className="w-3 h-3 rotate-90"/></Button>
-                  <Button variant="ghost" size="sm" onClick={() => moveItem(idx,"down")} disabled={idx === faqs.length-1}><ChefHat className="w-3 h-3 -rotate-90"/></Button>
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing(item); setShowForm(true); }}><Edit3 className="w-4 h-4"/></Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteFaq(item.id)}><Trash2 className="w-4 h-4 text-red-500"/></Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FAQForm({ shopId, edit, onClose, onSaved, nextOrder }: { shopId:string; edit:any|null; onClose:()=>void; onSaved:()=>void; nextOrder:number }) {
-  const [form, setForm] = useState<any>({ question:edit?.question||"", answer:edit?.answer||"", category:edit?.category||"", displayOrder:edit?.displayOrder??nextOrder, active:edit?.active??true });
-  const [saving, setSaving] = useState(false);
-  const save = async () => {
-    setSaving(true);
-    try { const p = { ...form, shopId, updatedAt:serverTimestamp() }; if (edit?.id) { await updateDoc(doc(getDb(), COL.faqs, edit.id), p); toast.success("FAQ updated"); } else { await addDoc(collection(getDb(), COL.faqs), { ...p, createdAt:serverTimestamp() }); toast.success("FAQ added"); } onSaved(); }
-    catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
-  };
-  return (
-    <Card className="shadow-soft border-orange-100">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-center justify-between"><h3 className="font-semibold">{edit ? "Edit" : "Add"} FAQ</h3><Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4"/></Button></div>
-        <div className="space-y-1.5"><Label>Question</Label><Input value={form.question} onChange={(e) => setForm((p:any) => ({ ...p, question:e.target.value }))} placeholder="Frequently asked question"/></div>
-        <div className="space-y-1.5"><Label>Answer</Label><Textarea value={form.answer} onChange={(e) => setForm((p:any) => ({ ...p, answer:e.target.value }))} rows={3} placeholder="Answer..."/></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5"><Label>Category</Label><Input value={form.category} onChange={(e) => setForm((p:any) => ({ ...p, category:e.target.value }))} placeholder="e.g. Orders, Delivery"/></div>
-          <div className="space-y-1.5"><Label>Display Order</Label><Input type="number" value={form.displayOrder} onChange={(e) => setForm((p:any) => ({ ...p, displayOrder:parseInt(e.target.value)||0 }))}/></div>
-        </div>
-        <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(v) => setForm((p:any) => ({ ...p, active:v }))}/><Label className="text-sm">Active</Label></div>
-        <Button onClick={save} disabled={saving} className="bg-orange-500 hover:bg-orange-600">{saving ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Save className="w-4 h-4 mr-2"/>}{edit ? "Update" : "Add"} FAQ</Button>
-      </CardContent>
-    </Card>
-  );
-}

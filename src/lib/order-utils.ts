@@ -109,7 +109,7 @@ export async function notifyOrderStatusChange(order: {
       createdAt: serverTimestamp(),
     });
   } catch (error) {
-    console.warn("[order-utils] notification failed", error);
+    if (import.meta.env.DEV) console.warn("[order-utils] notification failed", error);
   }
 
   if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
